@@ -3,7 +3,7 @@
 //  Buda.com Cross-Border Payments · Server v1.0
 //  Simulador FX multi-divisa LATAM
 // ─────────────────────────────────────────────────────────────
-if (!process.env.PGPASSWORD) process.env.PGPASSWORD = '';
+// DB password handled via DATABASE_URL or PGPASSWORD env var
 
 const express  = require('express');
 const axios    = require('axios');
