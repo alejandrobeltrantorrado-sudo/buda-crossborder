@@ -24,14 +24,16 @@ const FX_API_BASE    = process.env.FX_API_BASE       || 'https://v6.exchangerate
 const SLACK_WEBHOOK  = process.env.SLACK_WEBHOOK     || '';
 
 // ── DB ────────────────────────────────────────────────────────
-const pool = new Pool({
-  host    : process.env.PGHOST     || 'postgres.railway.internal',
-  port    : parseInt(process.env.PGPORT || '5432'),
-  database: process.env.PGDATABASE || 'railway',
-  user    : process.env.PGUSER     || 'postgres',
-  password: process.env.PGPASSWORD,
-  ssl     : process.env.PGHOST && process.env.PGHOST.includes('railway') ? { rejectUnauthorized: false } : false,
-});
+const pool = process.env.DATABASE_URL
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  : new Pool({
+      host    : process.env.PGHOST     || 'postgres.railway.internal',
+      port    : parseInt(process.env.PGPORT || '5432'),
+      database: process.env.PGDATABASE || 'railway',
+      user    : process.env.PGUSER     || 'postgres',
+      password: process.env.PGPASSWORD,
+      ssl     : { rejectUnauthorized: false },
+    });
 
 async function initDB() {
   await pool.query(`
