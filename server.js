@@ -293,46 +293,46 @@ function portal() {
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#0D0F1A;--bg2:#141620;--bg3:#1A1D2E;
-  --blue:#3B82F6;--blue-d:#2563EB;--blue-l:rgba(59,130,246,.1);
-  --blue-border:rgba(59,130,246,.25);
-  --orange:#F59E0B;--orange-l:rgba(245,158,11,.1);
-  --text:#F0F2FF;--gray:#8B92A8;--border:rgba(255,255,255,.08);
-  --green:#10B981;--green-l:rgba(16,185,129,.1);
-  --red:#EF4444;--red-l:rgba(239,68,68,.1);
+  --bg:#FFFFFF;--bg2:#FFFFFF;--bg3:#F7F8FA;
+  --blue:#1A56DB;--blue-d:#1447BB;--blue-l:#EBF2FF;
+  --blue-border:#BDD3F9;
+  --orange:#F59E0B;--orange-l:#FFFBEB;
+  --text:#111928;--gray:#6B7280;--border:#E5E7EB;
+  --green:#057A55;--green-l:#F3FAF7;
+  --red:#E02424;--red-l:#FDF2F2;
   --white:#FFFFFF;
 }
 body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
 code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-family:'JetBrains Mono',monospace!important}
 
 /* Nav */
-.nav{background:rgba(13,15,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100}
+.nav{background:#FFFFFF;border-bottom:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.06);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100}
 .nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px;text-decoration:none}
 .nav-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:-1px}
-.nav-logo-text{font-size:16px;font-weight:700;color:var(--white);font-family:'JetBrains Mono',monospace}
+.nav-logo-text{font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace}
 .nav-logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
 .nav-tabs{display:flex;flex:1;gap:0}
 .nav-tab{padding:0 18px;height:60px;display:flex;align-items:center;font-size:12px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;letter-spacing:.02em}
 .nav-tab:hover{color:var(--blue)}
-.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:10px}
 .rates-badge{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace}
 .rates-dot{width:6px;height:6px;border-radius:50%;background:var(--blue)}
 .user-chip{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
-.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace}
+.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 .btn-sm-nav{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-size:11px}
 .btn-sm-nav:hover{border-color:var(--blue);color:var(--blue)}
 
 /* Login */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(59,130,246,.05) 0%,transparent 60%)}
-.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 .login-brand{text-align:center;margin-bottom:28px}
 .login-icon{width:56px;height:56px;background:var(--blue);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
 .login-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
 .login-sub{font-size:12px;color:var(--gray)}
 .fg{margin-bottom:14px}
 .fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:500;font-family:'JetBrains Mono',monospace}
-.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);background:var(--bg3);transition:.15s;font-family:'JetBrains Mono',monospace}
+.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);background:#fff;transition:.15s;font-family:'JetBrains Mono',monospace}
 .fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
 .btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px;font-family:'Inter',sans-serif}
 .btn-p:hover{background:var(--blue-d)}
@@ -343,20 +343,20 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
 .page{display:none}.page.active{display:block}
 
 /* Hero */
-.hero{background:linear-gradient(135deg,var(--bg3) 0%,#0A0C16 100%);border:1px solid var(--border);border-top:1px solid var(--blue-border);border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;right:-80px;top:-80px;width:400px;height:400px;background:radial-gradient(circle,var(--blue-l) 0%,transparent 70%)}
-.hero-tag{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);border:none;border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;right:-80px;top:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 70%)}
+.hero-tag{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px;color:#fff;font-family:'JetBrains Mono',monospace}
 .hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2;font-family:'JetBrains Mono',monospace}
-.hero-sub{font-size:14px;color:var(--gray);max-width:500px;line-height:1.6}
+.hero-sub{font-size:14px;color:rgba(255,255,255,.8);max-width:500px;line-height:1.6}
 .hero-flags{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}
-.flag-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px}
+.flag-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;color:#fff}
 
 /* Rates ticker */
 .ticker{display:flex;gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
-.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:150px;flex-shrink:0;transition:.15s}
+.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:150px;flex-shrink:0;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
 .ticker-item:hover{border-color:var(--blue-border)}
 .ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
-.ticker-rate{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--blue)}
+.ticker-rate{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text)}
 .ticker-src{font-size:9px;color:var(--gray);margin-top:2px}
 
 /* Cards grid */
@@ -392,9 +392,9 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
 .curr-btn:hover{border-color:var(--blue-border);color:var(--text)}
 
 /* Info page */
-.info-hero{background:var(--bg3);border:1px solid var(--border);border-top:1px solid var(--blue-border);border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
+.info-hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);border:none;border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
 .info-title{font-size:28px;font-weight:700;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
-.info-sub{font-size:15px;color:var(--gray);max-width:560px;margin:0 auto;line-height:1.7}
+.info-sub{font-size:15px;color:rgba(255,255,255,.8);max-width:560px;margin:0 auto;line-height:1.7}
 .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
 .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
 .info-card:hover{border-color:var(--blue-border)}
@@ -433,8 +433,7 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-brand">
-        <div class="login-icon">B.</div>
-        <div class="login-title">Buda.com</div>
+        <div style="font-size:32px;font-weight:900;color:#111928;letter-spacing:-1px;font-family:'Inter',sans-serif;margin-bottom:8px">buda<span style="color:var(--blue)">.</span>com</div>
         <div class="login-sub">Cross-Border Payments · Simulador FX</div>
       </div>
       <div class="fg"><label>Email</label><input class="fi" type="email" id="lEmail" autocomplete="off" placeholder="tu@empresa.com"></div>
