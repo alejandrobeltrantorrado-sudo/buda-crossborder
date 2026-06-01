@@ -289,120 +289,129 @@ function portal() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Buda.com · Cross-Border Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#F7F8FA;--bg2:#FFFFFF;--bg3:#F0F2F5;
-  --teal:#00837A;--teal-d:#006B63;--teal-l:#E6F5F4;
-  --orange:#FF6B35;--orange-l:#FFF3EE;
-  --text:#1A1D2E;--gray:#6B7280;--border:#E5E7EB;
-  --green:#1A7A4A;--green-l:#EDFAF4;
-  --red:#C0392B;--red-l:#FFF0EE;
+  --bg:#0D0F1A;--bg2:#141620;--bg3:#1A1D2E;
+  --blue:#3B82F6;--blue-d:#2563EB;--blue-l:rgba(59,130,246,.1);
+  --blue-border:rgba(59,130,246,.25);
+  --orange:#F59E0B;--orange-l:rgba(245,158,11,.1);
+  --text:#F0F2FF;--gray:#8B92A8;--border:rgba(255,255,255,.08);
+  --green:#10B981;--green-l:rgba(16,185,129,.1);
+  --red:#EF4444;--red-l:rgba(239,68,68,.1);
+  --white:#FFFFFF;
 }
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
+code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-family:'JetBrains Mono',monospace!important}
 
 /* Nav */
-.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06)}
-.nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px}
-.nav-logo-icon{width:36px;height:36px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
-.nav-logo-text{font-size:16px;font-weight:700;color:var(--text)}
-.nav-logo-sub{font-size:10px;color:var(--gray);font-weight:400}
+.nav{background:rgba(13,15,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px;text-decoration:none}
+.nav-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:-1px}
+.nav-logo-text{font-size:16px;font-weight:700;color:var(--white);font-family:'JetBrains Mono',monospace}
+.nav-logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
 .nav-tabs{display:flex;flex:1;gap:0}
-.nav-tab{padding:0 20px;height:60px;display:flex;align-items:center;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
-.nav-tab:hover{color:var(--teal)}
-.nav-tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
+.nav-tab{padding:0 18px;height:60px;display:flex;align-items:center;font-size:12px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;letter-spacing:.02em}
+.nav-tab:hover{color:var(--blue)}
+.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:10px}
-.rates-badge{background:var(--teal-l);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--teal);display:flex;align-items:center;gap:5px}
-.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
+.rates-badge{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace}
+.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--blue)}
 .user-chip{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
-.av{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
+.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace}
 .btn-sm-nav{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-size:11px}
+.btn-sm-nav:hover{border-color:var(--blue);color:var(--blue)}
 
 /* Login */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal-l) 0%,#fff 60%)}
-.login-card{background:#fff;border-radius:20px;padding:40px;width:380px;box-shadow:0 8px 40px rgba(0,131,122,.12)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);background-image:radial-gradient(ellipse at 20% 50%,rgba(59,130,246,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(59,130,246,.05) 0%,transparent 60%)}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px;width:380px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
 .login-brand{text-align:center;margin-bottom:28px}
-.login-icon{width:56px;height:56px;background:var(--teal);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;margin-bottom:12px}
-.login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.login-icon{width:56px;height:56px;background:var(--blue);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.login-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
 .login-sub{font-size:12px;color:var(--gray)}
 .fg{margin-bottom:14px}
-.fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
-.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);transition:.15s}
-.fi:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,131,122,.1)}
-.btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px}
-.btn-p:hover{background:var(--teal-d)}
-.btn-sec{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:var(--gray);font-size:13px;cursor:pointer}
+.fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:500;font-family:'JetBrains Mono',monospace}
+.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);background:var(--bg3);transition:.15s;font-family:'JetBrains Mono',monospace}
+.fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px;font-family:'Inter',sans-serif}
+.btn-p:hover{background:var(--blue-d)}
+.btn-sec{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:none;color:var(--gray);font-size:13px;cursor:pointer}
 
 /* Main layout */
 .main{max-width:1100px;margin:0 auto;padding:24px 16px}
 .page{display:none}.page.active{display:block}
 
 /* Hero */
-.hero{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;right:-40px;top:-40px;width:300px;height:300px;background:rgba(255,255,255,.05);border-radius:50%}
-.hero-tag{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px}
-.hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2}
-.hero-sub{font-size:14px;opacity:.85;max-width:500px;line-height:1.6}
+.hero{background:linear-gradient(135deg,var(--bg3) 0%,#0A0C16 100%);border:1px solid var(--border);border-top:1px solid var(--blue-border);border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;right:-80px;top:-80px;width:400px;height:400px;background:radial-gradient(circle,var(--blue-l) 0%,transparent 70%)}
+.hero-tag{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2;font-family:'JetBrains Mono',monospace}
+.hero-sub{font-size:14px;color:var(--gray);max-width:500px;line-height:1.6}
 .hero-flags{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}
-.flag-chip{background:rgba(255,255,255,.15);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(4px)}
+.flag-chip{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px}
 
 /* Rates ticker */
 .ticker{display:flex;gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
-.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:140px;flex-shrink:0}
-.ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
-.ticker-rate{font-size:16px;font-weight:700;font-family:monospace;color:var(--text)}
+.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:150px;flex-shrink:0;transition:.15s}
+.ticker-item:hover{border-color:var(--blue-border)}
+.ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.ticker-rate{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--blue)}
 .ticker-src{font-size:9px;color:var(--gray);margin-top:2px}
 
 /* Cards grid */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
-.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:14px}
+.card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:14px;font-family:'JetBrains Mono',monospace}
 
 /* Simulator */
-.sim-result{background:linear-gradient(135deg,var(--teal-l),#fff);border:1.5px solid var(--teal);border-radius:14px;padding:20px;margin-top:14px}
-.sim-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,131,122,.1)}
+.sim-result{background:var(--bg3);border:1.5px solid var(--blue-border);border-radius:14px;padding:20px;margin-top:14px}
+.sim-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .sim-row:last-child{border:none;font-size:15px;font-weight:700;padding-top:12px;margin-top:4px}
-.sim-key{font-size:12px;color:var(--gray)}
-.sim-val{font-size:13px;font-weight:600;font-family:monospace;color:var(--text)}
-.highlight-val{color:var(--teal);font-size:16px}
-.btn-save{width:100%;padding:11px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px}
-.btn-save:hover{background:var(--teal-d)}
+.sim-key{font-size:12px;color:var(--gray);font-family:'JetBrains Mono',monospace}
+.sim-val{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.highlight-val{color:var(--blue);font-size:16px;font-family:'JetBrains Mono',monospace}
+.btn-save{width:100%;padding:11px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px;font-family:'Inter',sans-serif}
+.btn-save:hover{background:var(--blue-d)}
 
 /* History table */
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{text-align:left;padding:7px 10px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500}
-.tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
+.tbl th{text-align:left;padding:7px 10px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500;font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace}
 .tbl tr:last-child td{border:none}
 .tbl tr:hover td{background:var(--bg3)}
-.badge{display:inline-flex;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:500}
-.b-teal{background:var(--teal-l);color:var(--teal)}
+.badge{display:inline-flex;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.b-teal{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-border)}
 .b-orange{background:var(--orange-l);color:var(--orange)}
 
 /* Currency selector */
 .curr-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.curr-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
-.curr-btn.active{border-color:var(--teal);background:var(--teal-l);color:var(--teal);font-weight:500}
-.curr-btn:hover{border-color:var(--teal)}
+.curr-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:none;font-size:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px;color:var(--gray);font-family:'JetBrains Mono',monospace}
+.curr-btn.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue);font-weight:600}
+.curr-btn:hover{border-color:var(--blue-border);color:var(--text)}
 
 /* Info page */
-.info-hero{background:linear-gradient(135deg,#1A1D2E,#2D3050);border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
-.info-title{font-size:28px;font-weight:700;margin-bottom:12px}
-.info-sub{font-size:15px;opacity:.7;max-width:560px;margin:0 auto;line-height:1.7}
+.info-hero{background:var(--bg3);border:1px solid var(--border);border-top:1px solid var(--blue-border);border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
+.info-title{font-size:28px;font-weight:700;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
+.info-sub{font-size:15px;color:var(--gray);max-width:560px;margin:0 auto;line-height:1.7}
 .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
 .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
+.info-card:hover{border-color:var(--blue-border)}
 .info-icon{font-size:32px;margin-bottom:12px}
 .info-card-title{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)}
 .info-card-text{font-size:12px;color:var(--gray);line-height:1.6}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative}
-.step-num{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-bottom:10px}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+.step:hover{border-color:var(--blue-border)}
+.step-num{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-bottom:10px;font-family:'JetBrains Mono',monospace}
 .step-title{font-size:13px;font-weight:600;margin-bottom:6px}
 .step-text{font-size:11px;color:var(--gray);line-height:1.5}
 .corr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .corr-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
+.corr-card:hover{border-color:var(--blue-border)}
 .corr-flag{font-size:28px;margin-bottom:8px}
-.corr-name{font-size:13px;font-weight:600;margin-bottom:4px}
+.corr-name{font-size:13px;font-weight:600;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
 .corr-text{font-size:11px;color:var(--gray);line-height:1.5}
 
 /* Float alert */
@@ -424,7 +433,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-brand">
-        <div class="login-icon">B</div>
+        <div class="login-icon">B.</div>
         <div class="login-title">Buda.com</div>
         <div class="login-sub">Cross-Border Payments · Simulador FX</div>
       </div>
@@ -432,7 +441,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
       <div class="fg"><label>Contraseña</label><input class="fi" type="password" id="lPass" autocomplete="new-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn-p" onclick="login()">Ingresar</button>
       <div id="lErr" style="font-size:11px;color:var(--red);text-align:center;margin-top:10px"></div>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--teal)">Contáctanos</a></div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--blue)">Contáctanos</a></div>
     </div>
   </div>
 </div>
@@ -442,7 +451,7 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
   <!-- Nav -->
   <nav class="nav">
     <div class="nav-logo">
-      <div class="nav-logo-icon">B</div>
+      <div class="nav-logo-icon">B.</div>
       <div>
         <div class="nav-logo-text">Buda.com</div>
         <div class="nav-logo-sub">Cross-Border Payments</div>
@@ -508,19 +517,19 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           </div>
 
           <!-- Resultado cotización -->
-          <div id="cotResult" style="display:none;background:var(--teal-l);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">Resultado de conversión</div>
+          <div id="cotResult" style="display:none;background:var(--blue-l);border:1px solid var(--blue-border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;font-weight:600;font-family:'JetBrains Mono',monospace">Resultado de conversión</div>
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
               <span style="font-size:12px;color:var(--gray)">Tasa referencia</span>
               <span style="font-size:13px;font-weight:600;font-family:monospace" id="crTasaRef">—</span>
             </div>
             <div style="display:flex;justify-content:space-between;margin-bottom:4px">
               <span style="font-size:12px;color:var(--gray)">Tu tasa (c/margen)</span>
-              <span style="font-size:14px;font-weight:700;font-family:monospace;color:var(--teal)" id="crTasaCli">—</span>
+              <span style="font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--blue)" id="crTasaCli">—</span>
             </div>
             <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(0,131,122,.15);padding-top:8px;margin-top:4px">
               <span style="font-size:12px;color:var(--gray)" id="crLabel">Monto destino</span>
-              <span style="font-size:16px;font-weight:700;color:var(--teal);font-family:monospace" id="crMontoDest">—</span>
+              <span style="font-size:16px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace" id="crMontoDest">—</span>
             </div>
           </div>
 
@@ -674,10 +683,10 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
         <div class="corr-card"><div class="corr-flag">🇨🇱🇵🇪</div><div class="corr-name">Chile ↔ Perú</div><div class="corr-text">CLP/PEN · Cadena de valor minera y agroindustrial.</div></div>
       </div>
 
-      <div class="card" style="background:var(--teal);border:none;margin-top:24px;text-align:center;padding:32px">
+      <div class="card" style="background:var(--blue);border:none;margin-top:24px;text-align:center;padding:32px">
         <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">¿Listo para comenzar?</div>
         <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:20px">Agenda una llamada con nuestro equipo OTC y obtén una cotización personalizada.</div>
-        <a href="mailto:otc@buda.com" style="display:inline-block;padding:12px 28px;background:#fff;color:var(--teal);border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Contactar equipo OTC →</a>
+        <a href="mailto:otc@buda.com" style="display:inline-block;padding:12px 28px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;font-family:'Inter',sans-serif">Contactar equipo OTC →</a>
       </div>
     </div>
 
@@ -749,7 +758,7 @@ async function loadRates() {
   fxData = d;
   var dot = document.getElementById('ratesDot');
   var src = document.getElementById('ratesSource');
-  dot.style.background = d.source==='api' ? 'var(--teal)' : '#F59E0B';
+  dot.style.background = d.source==='api' ? 'var(--blue)' : '#F59E0B';
   src.textContent = d.source==='api' ? 'API en tiempo real' : 'Tasas manuales';
   document.getElementById('ratesUpdated').textContent = 'Actualizado: ' + new Date(d.updatedAt).toLocaleString('es-CO');
   renderTicker(d.rates);
@@ -779,7 +788,7 @@ function renderRatesGrid(rates) {
         '<span style="font-size:24px">'+info.flag+'</span>' +
         '<div><div style="font-size:13px;font-weight:600">'+info.name+'</div><div style="font-size:10px;color:var(--gray)">'+c+'</div></div>' +
       '</div>' +
-      '<div style="font-size:24px;font-weight:700;font-family:monospace;color:var(--teal)">'+info.symbol+' '+fmt(r, r < 10 ? 4 : 2)+'</div>' +
+      '<div style="font-size:24px;font-weight:700;font-family:monospace;color:var(--blue)">'+info.symbol+' '+fmt(r, r < 10 ? 4 : 2)+'</div>' +
       '<div style="font-size:11px;color:var(--gray);margin-top:4px">por 1 USD</div>' +
       '</div>';
   }).join('');
@@ -830,7 +839,7 @@ function calcSim() {
       '<div class="sim-result">' +
         '<div class="sim-row"><span class="sim-key">Par</span><span class="sim-val">'+simOrig+' → '+simDest+'</span></div>' +
         '<div class="sim-row"><span class="sim-key">Tasa de referencia</span><span class="sim-val">'+fmt(tasaRef, tasaRef<10?4:2)+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Tu tasa (margen '+margen+'%)</span><span class="sim-val" style="color:var(--teal)">'+fmt(tasaCli, tasaCli<10?4:2)+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Tu tasa (margen '+margen+'%)</span><span class="sim-val" style="color:var(--blue)">'+fmt(tasaCli, tasaCli<10?4:2)+'</span></div>' +
         '<div class="sim-row"><span class="sim-key">Ticket promedio</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(ticket)+'</span></div>' +
         '<div class="sim-row"><span class="sim-key">Nº de operaciones</span><span class="sim-val">'+numOps.toLocaleString('es-CO')+'</span></div>' +
         '<div class="sim-row"><span class="sim-key">Volumen total</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(volumen)+'</span></div>' +
@@ -864,7 +873,7 @@ async function loadHist() {
     return '<tr>' +
       '<td><span class="badge b-teal">'+r.par+'</span></td>' +
       '<td style="font-family:monospace">'+fmt(r.tasa_referencia,4)+'</td>' +
-      '<td style="font-family:monospace;color:var(--teal)">'+fmt(r.tasa_cliente,4)+'</td>' +
+      '<td style="font-family:monospace;color:var(--blue)">'+fmt(r.tasa_cliente,4)+'</td>' +
       '<td>'+fmt(r.margen_pct,2)+'%</td>' +
       '<td style="font-family:monospace">'+fmt(r.volumen_total)+'</td>' +
       '<td style="font-family:monospace;color:var(--green);font-weight:600">'+fmt(r.ganancia_proyectada)+'</td>' +
@@ -882,7 +891,7 @@ async function saveTasa() {
   msg.style.display = 'block';
   if (d.ok) {
     msg.textContent = 'Tasa guardada: '+par+' = '+tasa;
-    msg.style.color = 'var(--teal)';
+    msg.style.color = 'var(--blue)';
     loadRates();
   } else {
     msg.textContent = d.error || 'Error';
@@ -899,8 +908,27 @@ function showPage(p) {
   if (p==='rates') loadRates();
 }
 
+function calcMonthly() {
+  var ticket  = parseFloat(document.getElementById('mTicket').value) || 0;
+  var opsDay  = parseFloat(document.getElementById('mOpsDay').value) || 0;
+  var days    = parseFloat(document.getElementById('mDays').value)   || 22;
+  var margen  = parseFloat(document.getElementById('mMargen').value) || 0;
+  if (!ticket || !opsDay || !margen) { document.getElementById('monthlyResult').style.display='none'; return; }
+  var opsMonth   = opsDay * days;
+  var volMonth   = ticket * opsMonth;
+  var margenMonth = volMonth * (margen / 100);
+  var margenYear  = margenMonth * 12;
+  var curr = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
+  document.getElementById('mResOps').textContent     = opsMonth.toLocaleString('es-CO');
+  document.getElementById('mResVol').textContent     = curr + ' ' + fmt(volMonth);
+  document.getElementById('mResMargen').textContent  = curr + ' ' + fmt(margenMonth);
+  document.getElementById('mResAnual').textContent   = curr + ' ' + fmt(margenYear);
+  document.getElementById('mResFormula').textContent = opsDay + ' ops/día × ' + days + ' días × ' + curr + ' ' + fmt(ticket) + ' ticket × ' + margen + '% margen = ' + curr + ' ' + fmt(margenMonth) + '/mes';
+  document.getElementById('monthlyResult').style.display = 'block';
+}
+
 function floatAlert(title, body, type) {
-  var colors = {teal:['var(--teal-l)','var(--teal)','✅'], red:['var(--red-l)','var(--red)','❌'], orange:['var(--orange-l)','var(--orange)','⚠️']};
+  var colors = {teal:['var(--blue-l)','var(--blue)','✅'], red:['var(--red-l)','var(--red)','❌'], orange:['var(--orange-l)','var(--orange)','⚠️']};
   var c = colors[type]||colors.teal;
   var el = document.createElement('div');
   el.className = 'float-alert';
