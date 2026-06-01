@@ -623,70 +623,125 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
 
     <!-- INFO -->
     <div class="page" id="page-info">
-      <div class="info-hero">
-        <div style="font-size:40px;margin-bottom:12px">🌎</div>
-        <div class="info-title">Cross-Border Payments con Buda.com</div>
-        <div class="info-sub">Transferencias internacionales rápidas, seguras y a precio de mercado entre los principales países de Latinoamérica, usando criptomonedas como riel de liquidación.</div>
+
+      <!-- Hero statement -->
+      <div style="text-align:center;padding:64px 24px 48px;max-width:720px;margin:0 auto">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Infraestructura · B2B · API-first</div>
+        <div style="font-size:42px;font-weight:800;line-height:1.15;color:var(--text);margin-bottom:20px;letter-spacing:-1px">Pagos internacionales<br>en minutos, no en días</div>
+        <div style="font-size:17px;color:var(--gray);line-height:1.7;max-width:560px;margin:0 auto 32px">Conecta tu empresa a una red de liquidación instantánea entre Latinoamérica y Asia. Una sola API. Múltiples corredores. Sin fricción bancaria.</div>
+        <a href="mailto:otc@buda.com" style="display:inline-block;padding:14px 32px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;margin-right:10px">Hablar con el equipo →</a>
+        <a onclick="showPage('sim');event.preventDefault()" href="#" style="display:inline-block;padding:14px 32px;border:1.5px solid var(--border);color:var(--text);border-radius:10px;font-weight:500;font-size:14px;text-decoration:none">Ver simulador</a>
       </div>
 
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Cómo funciona?</div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-title">El cliente envía fondos</div>
-          <div class="step-text">Tu cliente en el país de origen deposita en moneda local a una cuenta local de Buda.com.</div>
+      <!-- Differentiators -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:48px">
+        <div style="background:#fff;padding:32px">
+          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">&lt; 5 min</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Liquidación en minutos</div>
+          <div style="font-size:13px;color:var(--gray);line-height:1.6">vs 2–5 días hábiles por canales bancarios tradicionales. Disponible 24/7, los 365 días del año.</div>
         </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-title">Conversión instantánea</div>
-          <div class="step-text">Buda convierte los fondos a USDT/USDC al tipo de cambio pactado, usando su reserva de liquidez.</div>
+        <div style="background:#fff;padding:32px">
+          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">1 API</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Integración única</div>
+          <div style="font-size:13px;color:var(--gray);line-height:1.6">Un solo punto de conexión para operar en todos los corredores activos. Documentación lista, soporte dedicado.</div>
         </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-title">Liquidación en destino</div>
-          <div class="step-text">Los fondos se convierten a la moneda destino y se acreditan en la cuenta del beneficiario.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-title">Confirmación inmediata</div>
-          <div class="step-text">Ambas partes reciben confirmación en tiempo real. Todo el proceso toma minutos, no días hábiles.</div>
-        </div>
-      </div>
-
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Por qué es mejor que una transferencia bancaria?</div>
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-icon">⚡</div>
-          <div class="info-card-title">Velocidad</div>
-          <div class="info-card-text">Minutos vs 2-5 días hábiles de una transferencia SWIFT internacional. Disponibilidad 24/7 los 365 días.</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">💰</div>
-          <div class="info-card-title">Costo</div>
-          <div class="info-card-text">Sin comisiones bancarias intermedias. El único costo es el spread sobre la tasa de cambio, que tú defines.</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">🔍</div>
-          <div class="info-card-title">Transparencia</div>
-          <div class="info-card-text">Tasa de referencia de mercado visible en todo momento. Sin costos ocultos ni tipos de cambio inflados.</div>
+        <div style="background:#fff;padding:32px">
+          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">6 países</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Red en expansión</div>
+          <div style="font-size:13px;color:var(--gray);line-height:1.6">Colombia, Chile, Perú, Bolivia, Venezuela y China activos hoy. Nuevos corredores en camino.</div>
         </div>
       </div>
 
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">Corredores disponibles</div>
-      <div class="corr">
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇨🇱</div><div class="corr-name">Colombia ↔ Chile</div><div class="corr-text">COP/CLP · Ideal para pagos empresariales, nómina y comercio bilateral.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇵🇪</div><div class="corr-name">Colombia ↔ Perú</div><div class="corr-text">COP/PEN · Cadenas de suministro, proveedores y remesas.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇧🇴</div><div class="corr-name">Colombia ↔ Bolivia</div><div class="corr-text">COP/BOB · Comercio minorista y pagos de servicios.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇺🇸🇨🇴</div><div class="corr-name">USD ↔ Colombia</div><div class="corr-text">USD/COP · Exportaciones, inversiones y remesas de alto volumen.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇺🇸🇻🇪</div><div class="corr-name">USD ↔ Venezuela</div><div class="corr-text">USD/VES · Remesas familiares y pagos comerciales.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇱🇵🇪</div><div class="corr-name">Chile ↔ Perú</div><div class="corr-text">CLP/PEN · Cadena de valor minera y agroindustrial.</div></div>
+      <!-- Use cases -->
+      <div style="margin-bottom:48px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Casos de uso</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
+          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
+            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💸</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Plataformas de remesas</div>
+              <div style="font-size:13px;color:var(--gray);line-height:1.6">Ofrece a tus usuarios giros internacionales al instante. Cobra tu margen sobre la tasa de referencia y escala sin límites operativos.</div>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
+            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Pagos B2B internacionales</div>
+              <div style="font-size:13px;color:var(--gray);line-height:1.6">Paga proveedores, nómina o servicios en otro país sin cuentas bancarias locales, corresponsales ni días de espera.</div>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
+            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛒</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Comercio electrónico cross-border</div>
+              <div style="font-size:13px;color:var(--gray);line-height:1.6">Acepta pagos en la moneda local de tus compradores y recibe en la tuya. Sin rechazos de tarjeta, sin fricciones.</div>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
+            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏦</div>
+            <div>
+              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Fintech y neobancos</div>
+              <div style="font-size:13px;color:var(--gray);line-height:1.6">Agrega transferencias internacionales a tu producto sin construir la infraestructura. Conéctate en días, no meses.</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="card" style="background:var(--blue);border:none;margin-top:24px;text-align:center;padding:32px">
-        <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">¿Listo para comenzar?</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:20px">Agenda una llamada con nuestro equipo OTC y obtén una cotización personalizada.</div>
-        <a href="mailto:otc@buda.com" style="display:inline-block;padding:12px 28px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:13px;text-decoration:none;font-family:'Inter',sans-serif">Contactar equipo OTC →</a>
+      <!-- How it works -->
+      <div style="margin-bottom:48px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Cómo funciona</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative">
+          <div style="position:absolute;top:22px;left:calc(12.5% + 0px);width:75%;height:1px;background:var(--border);z-index:0"></div>
+          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">1</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Tu sistema llama la API</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Cotizaci\u00f3n en tiempo real al tipo de cambio de mercado.</div></div>
+          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">2</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Fondos en cuenta local</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Tu cliente deposita en moneda local en el pa\u00eds de origen.</div></div>
+          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">3</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Liquidaci\u00f3n instant\u00e1nea</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Buda.com procesa y acredita en el pa\u00eds destino en minutos.</div></div>
+          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">4</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Confirmaci\u00f3n autom\u00e1tica</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Tu sistema recibe webhook con el comprobante de pago.</div></div>
       </div>
+
+      <!-- Active corridors -->
+      <div style="margin-bottom:48px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Corredores activos</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🇨🇴🇨🇱</div>
+            <div><div style="font-size:13px;font-weight:600">Colombia → Chile</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / CLP</div></div>
+            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🇨🇴🇵🇪</div>
+            <div><div style="font-size:13px;font-weight:600">Colombia → Perú</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / PEN</div></div>
+            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🇨🇴🇧🇴</div>
+            <div><div style="font-size:13px;font-weight:600">Colombia → Bolivia</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / BOB</div></div>
+            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🇨🇴🇻🇪</div>
+            <div><div style="font-size:13px;font-weight:600">Colombia → Venezuela</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / VES</div></div>
+            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
+            <div style="font-size:28px">🇨🇴🇨🇳</div>
+            <div><div style="font-size:13px;font-weight:600">Colombia → China</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / CNY</div></div>
+            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px;opacity:.5">
+            <div style="font-size:28px">🌎</div>
+            <div><div style="font-size:13px;font-weight:600">Más corredores</div><div style="font-size:11px;color:var(--gray);margin-top:2px">En desarrollo</div></div>
+            <div style="margin-left:auto"><span style="background:var(--bg3);color:var(--gray);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Próximo</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA final -->
+      <div style="background:var(--text);border-radius:20px;padding:56px;text-align:center;margin-bottom:24px">
+        <div style="font-size:32px;font-weight:800;color:#fff;margin-bottom:12px;letter-spacing:-.5px">¿Tu empresa mueve dinero<br>entre países?</div>
+        <div style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6">Hablemos. En 30 minutos te mostramos cómo funciona la integración y simulamos tu modelo de negocio.</div>
+        <a href="mailto:otc@buda.com" style="display:inline-block;padding:14px 36px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none">Agendar llamada →</a>
+      </div>
+
     </div>
 
   </div>
