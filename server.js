@@ -3,7 +3,7 @@
 //  Buda.com Cross-Border Payments · Server v1.0
 //  Simulador FX multi-divisa LATAM
 // ─────────────────────────────────────────────────────────────
-// DB password handled via DATABASE_URL or PGPASSWORD env var
+if (!process.env.PGPASSWORD) process.env.PGPASSWORD = '';
 
 const express  = require('express');
 const axios    = require('axios');
@@ -24,16 +24,14 @@ const FX_API_BASE    = process.env.FX_API_BASE       || 'https://v6.exchangerate
 const SLACK_WEBHOOK  = process.env.SLACK_WEBHOOK     || '';
 
 // ── DB ────────────────────────────────────────────────────────
-const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
-  : new Pool({
-      host    : process.env.PGHOST     || 'postgres.railway.internal',
-      port    : parseInt(process.env.PGPORT || '5432'),
-      database: process.env.PGDATABASE || 'railway',
-      user    : process.env.PGUSER     || 'postgres',
-      password: process.env.PGPASSWORD,
-      ssl     : { rejectUnauthorized: false },
-    });
+const pool = new Pool({
+  host    : process.env.PGHOST     || 'postgres.railway.internal',
+  port    : parseInt(process.env.PGPORT || '5432'),
+  database: process.env.PGDATABASE || 'railway',
+  user    : process.env.PGUSER     || 'postgres',
+  password: process.env.PGPASSWORD,
+  ssl     : process.env.PGHOST && process.env.PGHOST.includes('railway') ? { rejectUnauthorized: false } : false,
+});
 
 async function initDB() {
   await pool.query(`
@@ -88,7 +86,6 @@ const FALLBACK_RATES = {
   PEN: 3.72,
   BOB: 6.91,
   VES: 46.50,
-  CNY: 7.24,
   USD: 1.00,
 };
 
@@ -113,7 +110,6 @@ async function refreshFX() {
             PEN: parseFloat(rates.PEN) || FALLBACK_RATES.PEN,
             BOB: parseFloat(rates.BOB) || FALLBACK_RATES.BOB,
             VES: parseFloat(rates.VES) || FALLBACK_RATES.VES,
-            CNY: parseFloat(rates.CNY) || FALLBACK_RATES.CNY,
             USD: 1.00,
           },
           source: 'api',
@@ -291,129 +287,120 @@ function portal() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Buda.com · Cross-Border Payments</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#FFFFFF;--bg2:#FFFFFF;--bg3:#F7F8FA;
-  --blue:#1A56DB;--blue-d:#1447BB;--blue-l:#EBF2FF;
-  --blue-border:#BDD3F9;
-  --orange:#F59E0B;--orange-l:#FFFBEB;
-  --text:#111928;--gray:#6B7280;--border:#E5E7EB;
-  --green:#057A55;--green-l:#F3FAF7;
-  --red:#E02424;--red-l:#FDF2F2;
-  --white:#FFFFFF;
+  --bg:#F7F8FA;--bg2:#FFFFFF;--bg3:#F0F2F5;
+  --teal:#00837A;--teal-d:#006B63;--teal-l:#E6F5F4;
+  --orange:#FF6B35;--orange-l:#FFF3EE;
+  --text:#1A1D2E;--gray:#6B7280;--border:#E5E7EB;
+  --green:#1A7A4A;--green-l:#EDFAF4;
+  --red:#C0392B;--red-l:#FFF0EE;
 }
-body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:13px;min-height:100vh}
-code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-family:'JetBrains Mono',monospace!important}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
 
 /* Nav */
-.nav{background:#FFFFFF;border-bottom:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.06);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100}
-.nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px;text-decoration:none}
-.nav-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#fff;font-family:'JetBrains Mono',monospace;letter-spacing:-1px}
-.nav-logo-text{font-size:16px;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace}
-.nav-logo-sub{font-size:9px;color:var(--gray);font-weight:400;letter-spacing:.08em;text-transform:uppercase}
+.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06)}
+.nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px}
+.nav-logo-icon{width:36px;height:36px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
+.nav-logo-text{font-size:16px;font-weight:700;color:var(--text)}
+.nav-logo-sub{font-size:10px;color:var(--gray);font-weight:400}
 .nav-tabs{display:flex;flex:1;gap:0}
-.nav-tab{padding:0 18px;height:60px;display:flex;align-items:center;font-size:12px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap;letter-spacing:.02em}
-.nav-tab:hover{color:var(--blue)}
-.nav-tab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.nav-tab{padding:0 20px;height:60px;display:flex;align-items:center;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.nav-tab:hover{color:var(--teal)}
+.nav-tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:10px}
-.rates-badge{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace}
-.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.rates-badge{background:var(--teal-l);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--teal);display:flex;align-items:center;gap:5px}
+.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
 .user-chip{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
-.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.av{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
 .btn-sm-nav{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-size:11px}
-.btn-sm-nav:hover{border-color:var(--blue);color:var(--blue)}
 
 /* Login */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
-.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:40px;width:380px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal-l) 0%,#fff 60%)}
+.login-card{background:#fff;border-radius:20px;padding:40px;width:380px;box-shadow:0 8px 40px rgba(0,131,122,.12)}
 .login-brand{text-align:center;margin-bottom:28px}
-.login-icon{width:56px;height:56px;background:var(--blue);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#fff;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
-.login-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.login-icon{width:56px;height:56px;background:var(--teal);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;margin-bottom:12px}
+.login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
 .login-sub{font-size:12px;color:var(--gray)}
 .fg{margin-bottom:14px}
-.fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.08em;margin-bottom:5px;font-weight:500;font-family:'JetBrains Mono',monospace}
-.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);background:#fff;transition:.15s;font-family:'JetBrains Mono',monospace}
-.fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
-.btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px;font-family:'Inter',sans-serif}
-.btn-p:hover{background:var(--blue-d)}
-.btn-sec{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:none;color:var(--gray);font-size:13px;cursor:pointer}
+.fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
+.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);transition:.15s}
+.fi:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,131,122,.1)}
+.btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px}
+.btn-p:hover{background:var(--teal-d)}
+.btn-sec{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:var(--gray);font-size:13px;cursor:pointer}
 
 /* Main layout */
 .main{max-width:1100px;margin:0 auto;padding:24px 16px}
 .page{display:none}.page.active{display:block}
 
 /* Hero */
-.hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);border:none;border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;right:-80px;top:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(255,255,255,.1) 0%,transparent 70%)}
-.hero-tag{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px;color:#fff;font-family:'JetBrains Mono',monospace}
-.hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2;font-family:'JetBrains Mono',monospace}
-.hero-sub{font-size:14px;color:rgba(255,255,255,.8);max-width:500px;line-height:1.6}
+.hero{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;right:-40px;top:-40px;width:300px;height:300px;background:rgba(255,255,255,.05);border-radius:50%}
+.hero-tag{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px}
+.hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2}
+.hero-sub{font-size:14px;opacity:.85;max-width:500px;line-height:1.6}
 .hero-flags{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}
-.flag-chip{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;color:#fff}
+.flag-chip{background:rgba(255,255,255,.15);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(4px)}
 
 /* Rates ticker */
 .ticker{display:flex;gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
-.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:150px;flex-shrink:0;transition:.15s;box-shadow:0 1px 3px rgba(0,0,0,.05)}
-.ticker-item:hover{border-color:var(--blue-border)}
-.ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
-.ticker-rate{font-size:16px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--text)}
+.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:140px;flex-shrink:0}
+.ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.ticker-rate{font-size:16px;font-weight:700;font-family:monospace;color:var(--text)}
 .ticker-src{font-size:9px;color:var(--gray);margin-top:2px}
 
 /* Cards grid */
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
-.card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:14px;font-family:'JetBrains Mono',monospace}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:14px}
 
 /* Simulator */
-.sim-result{background:var(--bg3);border:1.5px solid var(--blue-border);border-radius:14px;padding:20px;margin-top:14px}
-.sim-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.sim-result{background:linear-gradient(135deg,var(--teal-l),#fff);border:1.5px solid var(--teal);border-radius:14px;padding:20px;margin-top:14px}
+.sim-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,131,122,.1)}
 .sim-row:last-child{border:none;font-size:15px;font-weight:700;padding-top:12px;margin-top:4px}
-.sim-key{font-size:12px;color:var(--gray);font-family:'JetBrains Mono',monospace}
-.sim-val{font-size:13px;font-weight:600;font-family:'JetBrains Mono',monospace;color:var(--text)}
-.highlight-val{color:var(--blue);font-size:16px;font-family:'JetBrains Mono',monospace}
-.btn-save{width:100%;padding:11px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px;font-family:'Inter',sans-serif}
-.btn-save:hover{background:var(--blue-d)}
+.sim-key{font-size:12px;color:var(--gray)}
+.sim-val{font-size:13px;font-weight:600;font-family:monospace;color:var(--text)}
+.highlight-val{color:var(--teal);font-size:16px}
+.btn-save{width:100%;padding:11px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px}
+.btn-save:hover{background:var(--teal-d)}
 
 /* History table */
 .tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{text-align:left;padding:7px 10px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500;font-family:'JetBrains Mono',monospace;letter-spacing:.06em}
-.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace}
+.tbl th{text-align:left;padding:7px 10px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
 .tbl tr:last-child td{border:none}
 .tbl tr:hover td{background:var(--bg3)}
-.badge{display:inline-flex;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.b-teal{background:var(--blue-l);color:var(--blue);border:1px solid var(--blue-border)}
+.badge{display:inline-flex;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:500}
+.b-teal{background:var(--teal-l);color:var(--teal)}
 .b-orange{background:var(--orange-l);color:var(--orange)}
 
 /* Currency selector */
 .curr-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.curr-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:none;font-size:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px;color:var(--gray);font-family:'JetBrains Mono',monospace}
-.curr-btn.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue);font-weight:600}
-.curr-btn:hover{border-color:var(--blue-border);color:var(--text)}
+.curr-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
+.curr-btn.active{border-color:var(--teal);background:var(--teal-l);color:var(--teal);font-weight:500}
+.curr-btn:hover{border-color:var(--teal)}
 
 /* Info page */
-.info-hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);border:none;border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
-.info-title{font-size:28px;font-weight:700;margin-bottom:12px;font-family:'JetBrains Mono',monospace}
-.info-sub{font-size:15px;color:rgba(255,255,255,.8);max-width:560px;margin:0 auto;line-height:1.7}
+.info-hero{background:linear-gradient(135deg,#1A1D2E,#2D3050);border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
+.info-title{font-size:28px;font-weight:700;margin-bottom:12px}
+.info-sub{font-size:15px;opacity:.7;max-width:560px;margin:0 auto;line-height:1.7}
 .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
 .info-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
-.info-card:hover{border-color:var(--blue-border)}
 .info-icon{font-size:32px;margin-bottom:12px}
 .info-card-title{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)}
 .info-card-text{font-size:12px;color:var(--gray);line-height:1.6}
 .steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
-.step:hover{border-color:var(--blue-border)}
-.step-num{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-bottom:10px;font-family:'JetBrains Mono',monospace}
+.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative}
+.step-num{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-bottom:10px}
 .step-title{font-size:13px;font-weight:600;margin-bottom:6px}
 .step-text{font-size:11px;color:var(--gray);line-height:1.5}
 .corr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .corr-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
-.corr-card:hover{border-color:var(--blue-border)}
 .corr-flag{font-size:28px;margin-bottom:8px}
-.corr-name{font-size:13px;font-weight:600;margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+.corr-name{font-size:13px;font-weight:600;margin-bottom:4px}
 .corr-text{font-size:11px;color:var(--gray);line-height:1.5}
 
 /* Float alert */
@@ -435,14 +422,15 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
   <div class="login-wrap">
     <div class="login-card">
       <div class="login-brand">
-        <div style="font-size:32px;font-weight:900;color:#111928;letter-spacing:-1px;font-family:'Inter',sans-serif;margin-bottom:8px">buda<span style="color:var(--blue)">.</span>com</div>
+        <div class="login-icon">B</div>
+        <div class="login-title">Buda.com</div>
         <div class="login-sub">Cross-Border Payments · Simulador FX</div>
       </div>
       <div class="fg"><label>Email</label><input class="fi" type="email" id="lEmail" autocomplete="off" placeholder="tu@empresa.com"></div>
       <div class="fg"><label>Contraseña</label><input class="fi" type="password" id="lPass" autocomplete="new-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn-p" onclick="login()">Ingresar</button>
       <div id="lErr" style="font-size:11px;color:var(--red);text-align:center;margin-top:10px"></div>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--blue)">Contáctanos</a></div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--teal)">Contáctanos</a></div>
     </div>
   </div>
 </div>
@@ -452,17 +440,17 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
   <!-- Nav -->
   <nav class="nav">
     <div class="nav-logo">
-      <div class="nav-logo-icon">B.</div>
+      <div class="nav-logo-icon">B</div>
       <div>
         <div class="nav-logo-text">Buda.com</div>
         <div class="nav-logo-sub">Cross-Border Payments</div>
       </div>
     </div>
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="showPage('info')">Cross-Border Payments</div>
-      <div class="nav-tab" onclick="showPage('sim')">Simulador de negocio</div>
+      <div class="nav-tab active" onclick="showPage('sim')">Simulador</div>
       <div class="nav-tab" onclick="showPage('rates')">Tasas</div>
       <div class="nav-tab" onclick="showPage('hist')">Mis simulaciones</div>
+      <div class="nav-tab" onclick="showPage('info')">¿Qué es Cross-Border?</div>
     </div>
     <div class="nav-r">
       <div class="rates-badge"><div class="rates-dot" id="ratesDot"></div><span id="ratesSource">Cargando...</span></div>
@@ -475,7 +463,7 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
   <div class="main">
 
     <!-- SIMULADOR -->
-    <div class="page" id="page-sim">
+    <div class="page active" id="page-sim">
       <div class="hero">
         <div class="hero-tag">⚡ Simulador en tiempo real</div>
         <div class="hero-title">Cotiza tu operación<br>cross-border</div>
@@ -486,72 +474,102 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
           <div class="flag-chip">🇵🇪 Sol Peruano</div>
           <div class="flag-chip">🇧🇴 Boliviano</div>
           <div class="flag-chip">🇻🇪 Bolívar Venezolano</div>
-          <div class="flag-chip">🇨🇳 Yuan Chino</div>
+          <div class="flag-chip">🇺🇸 Dólar USD</div>
         </div>
       </div>
 
       <!-- Ticker -->
       <div class="ticker" id="ticker"></div>
 
-      <!-- Step 1: Corredor -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-title">1 · Elige el corredor</div>
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:end">
-          <div class="fg" style="margin:0">
+      <div class="two-col">
+        <!-- Simulator form -->
+        <div class="card">
+          <div class="card-title">Parámetros de la operación</div>
+
+          <div class="fg">
             <label>Moneda origen</label>
-            <div class="curr-select" id="origSelect" style="margin:0"></div>
+            <div class="curr-select" id="origSelect"></div>
           </div>
-          <div style="font-size:20px;color:var(--gray);padding-bottom:8px">→</div>
-          <div class="fg" style="margin:0">
+          <div class="fg">
             <label>Moneda destino</label>
-            <div class="curr-select" id="destSelect" style="margin:0"></div>
+            <div class="curr-select" id="destSelect"></div>
           </div>
-        </div>
-        <div id="cotResult" style="display:none;margin-top:14px;background:var(--blue-l);border:1px solid var(--blue-border);border-radius:10px;padding:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-            <div><span style="font-size:11px;color:var(--gray)">Tasa referencia </span><span style="font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text)" id="crTasaRef">—</span></div>
-            <div><span style="font-size:11px;color:var(--gray)">Tu tasa (c/margen) </span><span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--blue);font-size:14px" id="crTasaCli">—</span></div>
-            <div id="crLabel" style="font-size:11px;color:var(--gray)"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="fg">
+              <label>Monto a convertir</label>
+              <input class="fi" type="number" id="simMonto" placeholder="10.000" oninput="calcSim()">
+            </div>
+            <div class="fg">
+              <label>Tu margen (%)</label>
+              <input class="fi" type="number" id="simMargen" placeholder="1.5" step="0.1" oninput="calcSim()">
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Step 2: Business parameters -->
-      <div class="card" style="margin-bottom:14px">
-        <div class="card-title">2 · Parámetros del negocio</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-          <div class="fg" style="margin:0">
-            <label>Ticket promedio</label>
-            <input class="fi" type="number" id="simTicket" placeholder="5.000.000" oninput="calcSim()">
-            <div style="font-size:10px;color:var(--gray);margin-top:4px">en moneda origen</div>
+          <!-- Resultado cotización -->
+          <div id="cotResult" style="display:none;background:var(--teal-l);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">Resultado de conversión</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:12px;color:var(--gray)">Tasa referencia</span>
+              <span style="font-size:13px;font-weight:600;font-family:monospace" id="crTasaRef">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-size:12px;color:var(--gray)">Tu tasa (c/margen)</span>
+              <span style="font-size:14px;font-weight:700;font-family:monospace;color:var(--teal)" id="crTasaCli">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(0,131,122,.15);padding-top:8px;margin-top:4px">
+              <span style="font-size:12px;color:var(--gray)" id="crLabel">Monto destino</span>
+              <span style="font-size:16px;font-weight:700;color:var(--teal);font-family:monospace" id="crMontoDest">—</span>
+            </div>
           </div>
-          <div class="fg" style="margin:0">
-            <label>Ops por día</label>
-            <input class="fi" type="number" id="simOpsDay" placeholder="10" oninput="calcSim()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Días al mes</label>
-            <input class="fi" type="number" id="simDaysMonth" placeholder="22" oninput="calcSim()">
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Tu margen (%)</label>
-            <input class="fi" type="number" id="simMargen" placeholder="1.5" step="0.1" oninput="calcSim()">
-          </div>
-        </div>
-        <!-- Hidden fields for compatibility -->
-        <input type="hidden" id="simMonto" value="0">
-        <input type="hidden" id="simNumOps" value="0">
-        <div class="fg" style="margin-top:10px;margin-bottom:0">
-          <label>Notas (opcional)</label>
-          <input class="fi" type="text" id="simNotas" placeholder="Ej: remesas sector salud Colombia-Chile">
-        </div>
-      </div>
 
-      <!-- Step 3: Results -->
-      <div id="simResult" style="margin-bottom:14px">
-        <div style="background:var(--bg3);border-radius:16px;padding:28px;text-align:center;color:var(--gray)">
-          <div style="font-size:32px;margin-bottom:8px">📊</div>
-          <div style="font-size:14px">Completa los parámetros para ver la proyección de ingresos</div>
+          <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+            <div class="card-title">Simulador de volumen</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="fg">
+                <label>Ticket promedio</label>
+                <input class="fi" type="number" id="simTicket" placeholder="50.000" oninput="calcSim()">
+              </div>
+              <div class="fg">
+                <label>Nº de operaciones</label>
+                <input class="fi" type="number" id="simNumOps" placeholder="20" oninput="calcSim()">
+              </div>
+            </div>
+            <div class="fg">
+              <label>Notas (opcional)</label>
+              <input class="fi" type="text" id="simNotas" placeholder="Ej: operaciones mensuales sector salud">
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div>
+          <div class="card" style="margin-bottom:14px">
+            <div class="card-title">Resumen de la simulación</div>
+            <div id="simResult" style="color:var(--gray);font-size:12px;text-align:center;padding:20px 0">
+              Completa los campos para ver la proyección
+            </div>
+          </div>
+          <div class="card" style="background:linear-gradient(135deg,#1A1D2E,#2D3050);border:none">
+            <div class="card-title" style="color:rgba(255,255,255,.5)">¿Por qué Buda.com?</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="font-size:18px">⚡</span>
+                <div><div style="font-size:12px;font-weight:600;color:#fff">Liquidez inmediata</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Operaciones en minutos, no días</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="font-size:18px">🔒</span>
+                <div><div style="font-size:12px;font-weight:600;color:#fff">Regulado y seguro</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Cumplimiento AML/KYC en todos los países</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="font-size:18px">📊</span>
+                <div><div style="font-size:12px;font-weight:600;color:#fff">Tasas competitivas</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Referencia de mercado + tu margen</div></div>
+              </div>
+              <div style="display:flex;gap:10px;align-items:flex-start">
+                <span style="font-size:18px">🌎</span>
+                <div><div style="font-size:12px;font-weight:600;color:#fff">5 países LATAM</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">CO · CL · PE · BO · VE</div></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -568,7 +586,7 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
           <div class="fg" style="margin:0">
             <label>Moneda</label>
-            <select class="fi" id="manPar"><option value="COP">COP</option><option value="CLP">CLP</option><option value="PEN">PEN</option><option value="BOB">BOB</option><option value="VES">VES</option><option value="CNY">CNY</option></select>
+            <select class="fi" id="manPar"><option value="COP">COP</option><option value="CLP">CLP</option><option value="PEN">PEN</option><option value="BOB">BOB</option><option value="VES">VES</option></select>
           </div>
           <div class="fg" style="margin:0">
             <label>Tasa vs USD</label>
@@ -594,126 +612,71 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
     </div>
 
     <!-- INFO -->
-    <div class="page active" id="page-info">
-
-      <!-- Hero statement -->
-      <div style="text-align:center;padding:64px 24px 48px;max-width:720px;margin:0 auto">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:16px;font-family:'JetBrains Mono',monospace">Infraestructura · B2B · API-first</div>
-        <div style="font-size:42px;font-weight:800;line-height:1.15;color:var(--text);margin-bottom:20px;letter-spacing:-1px">Pagos internacionales<br>en minutos, no en días</div>
-        <div style="font-size:17px;color:var(--gray);line-height:1.7;max-width:560px;margin:0 auto 32px">Conecta tu empresa a una red de liquidación instantánea entre Latinoamérica y Asia. Una sola API. Múltiples corredores. Sin fricción bancaria.</div>
-        <a href="mailto:otc@buda.com" style="display:inline-block;padding:14px 32px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:14px;text-decoration:none;margin-right:10px">Hablar con el equipo →</a>
-        <a onclick="showPage('sim');event.preventDefault()" href="#" style="display:inline-block;padding:14px 32px;border:1.5px solid var(--border);color:var(--text);border-radius:10px;font-weight:500;font-size:14px;text-decoration:none">Ver simulador</a>
+    <div class="page" id="page-info">
+      <div class="info-hero">
+        <div style="font-size:40px;margin-bottom:12px">🌎</div>
+        <div class="info-title">Cross-Border Payments con Buda.com</div>
+        <div class="info-sub">Transferencias internacionales rápidas, seguras y a precio de mercado entre los principales países de Latinoamérica, usando criptomonedas como riel de liquidación.</div>
       </div>
 
-      <!-- Differentiators -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:48px">
-        <div style="background:#fff;padding:32px">
-          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">&lt; 5 min</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Liquidación en minutos</div>
-          <div style="font-size:13px;color:var(--gray);line-height:1.6">vs 2–5 días hábiles por canales bancarios tradicionales. Disponible 24/7, los 365 días del año.</div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Cómo funciona?</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-title">El cliente envía fondos</div>
+          <div class="step-text">Tu cliente en el país de origen deposita en moneda local a una cuenta local de Buda.com.</div>
         </div>
-        <div style="background:#fff;padding:32px">
-          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">1 API</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Integración única</div>
-          <div style="font-size:13px;color:var(--gray);line-height:1.6">Un solo punto de conexión para operar en todos los corredores activos. Documentación lista, soporte dedicado.</div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-title">Conversión instantánea</div>
+          <div class="step-text">Buda convierte los fondos a USDT/USDC al tipo de cambio pactado, usando su reserva de liquidez.</div>
         </div>
-        <div style="background:#fff;padding:32px">
-          <div style="font-size:28px;font-weight:800;color:var(--blue);font-family:'JetBrains Mono',monospace;margin-bottom:6px">6 países</div>
-          <div style="font-size:14px;font-weight:600;margin-bottom:6px">Red en expansión</div>
-          <div style="font-size:13px;color:var(--gray);line-height:1.6">Colombia, Chile, Perú, Bolivia, Venezuela y China activos hoy. Nuevos corredores en camino.</div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-title">Liquidación en destino</div>
+          <div class="step-text">Los fondos se convierten a la moneda destino y se acreditan en la cuenta del beneficiario.</div>
         </div>
-      </div>
-
-      <!-- Use cases -->
-      <div style="margin-bottom:48px">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Casos de uso</div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px">
-          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
-            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">💸</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Plataformas de remesas</div>
-              <div style="font-size:13px;color:var(--gray);line-height:1.6">Ofrece a tus usuarios giros internacionales al instante. Cobra tu margen sobre la tasa de referencia y escala sin límites operativos.</div>
-            </div>
-          </div>
-          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
-            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏢</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Pagos B2B internacionales</div>
-              <div style="font-size:13px;color:var(--gray);line-height:1.6">Paga proveedores, nómina o servicios en otro país sin cuentas bancarias locales, corresponsales ni días de espera.</div>
-            </div>
-          </div>
-          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
-            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛒</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Comercio electrónico cross-border</div>
-              <div style="font-size:13px;color:var(--gray);line-height:1.6">Acepta pagos en la moneda local de tus compradores y recibe en la tuya. Sin rechazos de tarjeta, sin fricciones.</div>
-            </div>
-          </div>
-          <div style="background:var(--bg3);border-radius:14px;padding:28px;display:flex;gap:20px;align-items:flex-start">
-            <div style="width:44px;height:44px;background:var(--blue-l);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🏦</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;margin-bottom:6px">Fintech y neobancos</div>
-              <div style="font-size:13px;color:var(--gray);line-height:1.6">Agrega transferencias internacionales a tu producto sin construir la infraestructura. Conéctate en días, no meses.</div>
-            </div>
-          </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-title">Confirmación inmediata</div>
+          <div class="step-text">Ambas partes reciben confirmación en tiempo real. Todo el proceso toma minutos, no días hábiles.</div>
         </div>
       </div>
 
-      <!-- How it works -->
-      <div style="margin-bottom:48px">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Cómo funciona</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;position:relative">
-          <div style="position:absolute;top:22px;left:calc(12.5% + 0px);width:75%;height:1px;background:var(--border);z-index:0"></div>
-          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">1</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Tu sistema llama la API</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Cotizaci\u00f3n en tiempo real al tipo de cambio de mercado.</div></div>
-          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">2</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Fondos en cuenta local</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Tu cliente deposita en moneda local en el pa\u00eds de origen.</div></div>
-          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">3</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Liquidaci\u00f3n instant\u00e1nea</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Buda.com procesa y acredita en el pa\u00eds destino en minutos.</div></div>
-          <div style="padding:0 16px;text-align:center;position:relative;z-index:1"><div style="width:44px;height:44px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 16px">4</div><div style="font-size:13px;font-weight:600;margin-bottom:6px">Confirmaci\u00f3n autom\u00e1tica</div><div style="font-size:12px;color:var(--gray);line-height:1.5">Tu sistema recibe webhook con el comprobante de pago.</div></div>
-      </div>
-
-      <!-- Active corridors -->
-      <div style="margin-bottom:48px">
-        <div style="font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);margin-bottom:24px;text-align:center;font-family:'JetBrains Mono',monospace">Corredores activos</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🇨🇴🇨🇱</div>
-            <div><div style="font-size:13px;font-weight:600">Colombia → Chile</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / CLP</div></div>
-            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🇨🇴🇵🇪</div>
-            <div><div style="font-size:13px;font-weight:600">Colombia → Perú</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / PEN</div></div>
-            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🇨🇴🇧🇴</div>
-            <div><div style="font-size:13px;font-weight:600">Colombia → Bolivia</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / BOB</div></div>
-            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🇨🇴🇻🇪</div>
-            <div><div style="font-size:13px;font-weight:600">Colombia → Venezuela</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / VES</div></div>
-            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px">
-            <div style="font-size:28px">🇨🇴🇨🇳</div>
-            <div><div style="font-size:13px;font-weight:600">Colombia → China</div><div style="font-size:11px;color:var(--gray);margin-top:2px">COP / CNY</div></div>
-            <div style="margin-left:auto"><span style="background:var(--green-l);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Activo</span></div>
-          </div>
-          <div style="border:1px solid var(--border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px;opacity:.5">
-            <div style="font-size:28px">🌎</div>
-            <div><div style="font-size:13px;font-weight:600">Más corredores</div><div style="font-size:11px;color:var(--gray);margin-top:2px">En desarrollo</div></div>
-            <div style="margin-left:auto"><span style="background:var(--bg3);color:var(--gray);font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;font-family:'JetBrains Mono',monospace">Próximo</span></div>
-          </div>
+      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Por qué es mejor que una transferencia bancaria?</div>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon">⚡</div>
+          <div class="info-card-title">Velocidad</div>
+          <div class="info-card-text">Minutos vs 2-5 días hábiles de una transferencia SWIFT internacional. Disponibilidad 24/7 los 365 días.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">💰</div>
+          <div class="info-card-title">Costo</div>
+          <div class="info-card-text">Sin comisiones bancarias intermedias. El único costo es el spread sobre la tasa de cambio, que tú defines.</div>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">🔍</div>
+          <div class="info-card-title">Transparencia</div>
+          <div class="info-card-text">Tasa de referencia de mercado visible en todo momento. Sin costos ocultos ni tipos de cambio inflados.</div>
         </div>
       </div>
 
-      <!-- CTA final -->
-      <div style="background:var(--text);border-radius:20px;padding:56px;text-align:center;margin-bottom:24px">
-        <div style="font-size:32px;font-weight:800;color:#fff;margin-bottom:12px;letter-spacing:-.5px">¿Tu empresa mueve dinero<br>entre países?</div>
-        <div style="font-size:15px;color:rgba(255,255,255,.6);margin-bottom:32px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.6">Hablemos. En 30 minutos te mostramos cómo funciona la integración y simulamos tu modelo de negocio.</div>
-        <a href="mailto:otc@buda.com" style="display:inline-block;padding:14px 36px;background:var(--blue);color:#fff;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none">Agendar llamada →</a>
+      <div style="font-size:16px;font-weight:600;margin-bottom:14px">Corredores disponibles</div>
+      <div class="corr">
+        <div class="corr-card"><div class="corr-flag">🇨🇴🇨🇱</div><div class="corr-name">Colombia ↔ Chile</div><div class="corr-text">COP/CLP · Ideal para pagos empresariales, nómina y comercio bilateral.</div></div>
+        <div class="corr-card"><div class="corr-flag">🇨🇴🇵🇪</div><div class="corr-name">Colombia ↔ Perú</div><div class="corr-text">COP/PEN · Cadenas de suministro, proveedores y remesas.</div></div>
+        <div class="corr-card"><div class="corr-flag">🇨🇴🇧🇴</div><div class="corr-name">Colombia ↔ Bolivia</div><div class="corr-text">COP/BOB · Comercio minorista y pagos de servicios.</div></div>
+        <div class="corr-card"><div class="corr-flag">🇺🇸🇨🇴</div><div class="corr-name">USD ↔ Colombia</div><div class="corr-text">USD/COP · Exportaciones, inversiones y remesas de alto volumen.</div></div>
+        <div class="corr-card"><div class="corr-flag">🇺🇸🇻🇪</div><div class="corr-name">USD ↔ Venezuela</div><div class="corr-text">USD/VES · Remesas familiares y pagos comerciales.</div></div>
+        <div class="corr-card"><div class="corr-flag">🇨🇱🇵🇪</div><div class="corr-name">Chile ↔ Perú</div><div class="corr-text">CLP/PEN · Cadena de valor minera y agroindustrial.</div></div>
       </div>
 
+      <div class="card" style="background:var(--teal);border:none;margin-top:24px;text-align:center;padding:32px">
+        <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">¿Listo para comenzar?</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:20px">Agenda una llamada con nuestro equipo OTC y obtén una cotización personalizada.</div>
+        <a href="mailto:otc@buda.com" style="display:inline-block;padding:12px 28px;background:#fff;color:var(--teal);border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Contactar equipo OTC →</a>
+      </div>
     </div>
 
   </div>
@@ -727,13 +690,12 @@ let fxData = {};
 let simOrig = 'USD', simDest = 'COP';
 
 const CURRENCIES = {
+  USD: { flag:'🇺🇸', name:'Dólar USD',       symbol:'$'   },
   COP: { flag:'🇨🇴', name:'Peso Colombiano',  symbol:'$'   },
   CLP: { flag:'🇨🇱', name:'Peso Chileno',     symbol:'$'   },
   PEN: { flag:'🇵🇪', name:'Sol Peruano',      symbol:'S/'  },
   BOB: { flag:'🇧🇴', name:'Boliviano',        symbol:'Bs.' },
   VES: { flag:'🇻🇪', name:'Bolívar',          symbol:'Bs.' },
-  CNY: { flag:'🇨🇳', name:'Yuan Chino',       symbol:'¥'   },
-  USD: { flag:'🇺🇸', name:'Dólar USD',        symbol:'$'   },
 };
 
 const fmt = function(n, dec) {
@@ -777,8 +739,6 @@ function showApp() {
   buildCurrencySelectors();
   loadRates();
   setInterval(loadRates, 3600000);
-  // Default to info page
-  showPage('info');
 }
 
 async function loadRates() {
@@ -787,7 +747,7 @@ async function loadRates() {
   fxData = d;
   var dot = document.getElementById('ratesDot');
   var src = document.getElementById('ratesSource');
-  dot.style.background = d.source==='api' ? 'var(--blue)' : '#F59E0B';
+  dot.style.background = d.source==='api' ? 'var(--teal)' : '#F59E0B';
   src.textContent = d.source==='api' ? 'API en tiempo real' : 'Tasas manuales';
   document.getElementById('ratesUpdated').textContent = 'Actualizado: ' + new Date(d.updatedAt).toLocaleString('es-CO');
   renderTicker(d.rates);
@@ -796,7 +756,7 @@ async function loadRates() {
 }
 
 function renderTicker(rates) {
-  var pairs = [['COP','CLP'],['COP','PEN'],['COP','BOB'],['COP','VES'],['COP','CNY'],['USD','COP'],['CLP','PEN']];
+  var pairs = [['USD','COP'],['USD','CLP'],['USD','PEN'],['USD','BOB'],['USD','VES'],['COP','CLP'],['COP','PEN']];
   document.getElementById('ticker').innerHTML = pairs.map(function(p) {
     var r = (rates[p[1]]||1) / (rates[p[0]]||1);
     return '<div class="ticker-item">' +
@@ -808,7 +768,7 @@ function renderTicker(rates) {
 }
 
 function renderRatesGrid(rates) {
-  var currs = ['COP','CLP','PEN','BOB','VES','CNY'];
+  var currs = Object.keys(CURRENCIES).filter(function(c){return c!=='USD';});
   document.getElementById('ratesGrid').innerHTML = currs.map(function(c) {
     var r = rates[c] || 0;
     var info = CURRENCIES[c];
@@ -817,7 +777,7 @@ function renderRatesGrid(rates) {
         '<span style="font-size:24px">'+info.flag+'</span>' +
         '<div><div style="font-size:13px;font-weight:600">'+info.name+'</div><div style="font-size:10px;color:var(--gray)">'+c+'</div></div>' +
       '</div>' +
-      '<div style="font-size:24px;font-weight:700;font-family:monospace;color:var(--blue)">'+info.symbol+' '+fmt(r, r < 10 ? 4 : 2)+'</div>' +
+      '<div style="font-size:24px;font-weight:700;font-family:monospace;color:var(--teal)">'+info.symbol+' '+fmt(r, r < 10 ? 4 : 2)+'</div>' +
       '<div style="font-size:11px;color:var(--gray);margin-top:4px">por 1 USD</div>' +
       '</div>';
   }).join('');
@@ -838,95 +798,61 @@ function setDest(c) { simDest=c; buildCurrencySelectors(); calcSim(); }
 
 function calcSim() {
   if (!fxData.rates) return;
-  var ticket   = parseFloat(document.getElementById('simTicket').value)    || 0;
-  var opsDay   = parseFloat(document.getElementById('simOpsDay').value)    || 0;
-  var daysMonth= parseFloat(document.getElementById('simDaysMonth').value) || 22;
-  var margen   = parseFloat(document.getElementById('simMargen').value)    || 0;
+  var monto   = parseFloat(document.getElementById('simMonto').value) || 0;
+  var margen  = parseFloat(document.getElementById('simMargen').value) || 0;
+  var ticket  = parseFloat(document.getElementById('simTicket').value) || 0;
+  var numOps  = parseInt(document.getElementById('simNumOps').value)   || 0;
 
-  var rOrig   = fxData.rates[simOrig] || 1;
-  var rDest   = fxData.rates[simDest] || 1;
+  var rOrig = fxData.rates[simOrig] || 1;
+  var rDest = fxData.rates[simDest] || 1;
   var tasaRef = rDest / rOrig;
   var tasaCli = tasaRef * (1 + margen / 100);
-  var currO   = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
-  var currD   = CURRENCIES[simDest] ? CURRENCIES[simDest].symbol : '$';
-  var dec     = tasaRef < 10 ? 4 : 2;
 
-  // Update hidden fields for guardarSim compatibility
-  document.getElementById('simMonto').value   = ticket;
-  document.getElementById('simNumOps').value  = Math.round(opsDay * daysMonth);
-
-  // Show tasa banner
-  if (tasaRef > 0) {
+  // Cotización
+  if (monto > 0) {
+    var montoDest = monto * tasaCli;
     document.getElementById('cotResult').style.display = 'block';
-    document.getElementById('crTasaRef').textContent = fmt(tasaRef, dec);
-    document.getElementById('crTasaCli').textContent = fmt(tasaCli, dec) + (margen ? '  (+'+margen+'%)' : '');
-    document.getElementById('crLabel').textContent   = '1 ' + simOrig + ' = ' + currD + ' ' + fmt(tasaCli, dec) + ' ' + simDest;
+    document.getElementById('crTasaRef').textContent = fmt(tasaRef, tasaRef < 10 ? 4 : 2);
+    document.getElementById('crTasaCli').textContent = fmt(tasaCli, tasaCli < 10 ? 4 : 2) + (margen ? ' (+'+margen+'%)' : '');
+    document.getElementById('crLabel').textContent   = 'Monto en '+simDest;
+    document.getElementById('crMontoDest').textContent = CURRENCIES[simDest].symbol + ' ' + fmt(montoDest);
   }
 
-  if (!ticket || !opsDay || !margen) {
+  // Simulación de volumen
+  if (ticket > 0 && numOps > 0) {
+    var volumen  = ticket * numOps;
+    var ganancia = volumen * (margen / 100);
+    var gananciaDestino = ganancia * tasaCli;
+
     document.getElementById('simResult').innerHTML =
-      '<div style="background:var(--bg3);border-radius:16px;padding:28px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px">Completa los parámetros para ver la proyección</div></div>';
-    return;
+      '<div class="sim-result">' +
+        '<div class="sim-row"><span class="sim-key">Par</span><span class="sim-val">'+simOrig+' → '+simDest+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Tasa de referencia</span><span class="sim-val">'+fmt(tasaRef, tasaRef<10?4:2)+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Tu tasa (margen '+margen+'%)</span><span class="sim-val" style="color:var(--teal)">'+fmt(tasaCli, tasaCli<10?4:2)+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Ticket promedio</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(ticket)+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Nº de operaciones</span><span class="sim-val">'+numOps.toLocaleString('es-CO')+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key">Volumen total</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(volumen)+'</span></div>' +
+        '<div class="sim-row"><span class="sim-key" style="font-size:13px;font-weight:600;color:var(--text)">Ganancia proyectada</span>' +
+          '<span class="sim-val highlight-val">'+CURRENCIES[simOrig].symbol+' '+fmt(ganancia)+' <span style="font-size:11px;color:var(--gray)">('+CURRENCIES[simDest].symbol+' '+fmt(gananciaDestino)+')</span></span>' +
+        '</div>' +
+      '</div>' +
+      '<button class="btn-save" onclick="guardarSim()">💾 Guardar simulación</button>';
   }
-
-  var opsMonth   = Math.round(opsDay * daysMonth);
-  var volMonth   = ticket * opsMonth;
-  var volMonthD  = volMonth * tasaCli;
-  var margenMonth = volMonth * (margen / 100);
-  var margenMonthD = margenMonth * tasaCli;
-  var margenYear  = margenMonth * 12;
-  var margenYearD = margenMonthD * 12;
-
-  document.getElementById('simResult').innerHTML =
-    // KPI cards
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">' +
-      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--gray);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Ops / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace">'+opsMonth.toLocaleString('es-CO')+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+opsDay+' ops × '+daysMonth+' días</div>' +
-      '</div>' +
-      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--gray);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Volumen / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace">'+currO+' '+fmt(volMonth)+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(volMonthD)+'</div>' +
-      '</div>' +
-      '<div style="background:var(--blue-l);border:1.5px solid var(--blue-border);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--blue);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tu margen / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--blue)">'+currO+' '+fmt(margenMonth)+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(margenMonthD)+'</div>' +
-      '</div>' +
-    '</div>' +
-    // Annual projection
-    '<div style="background:var(--text);border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">' +
-      '<div><div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyección anual</div>' +
-        '<div style="font-size:28px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace">'+currO+' '+fmt(margenYear)+'</div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,.4)">'+currD+' '+fmt(margenYearD)+' · a '+margen+'% de margen</div></div>' +
-      '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor activo</div>' +
-        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace">'+(CURRENCIES[simOrig]?CURRENCIES[simOrig].flag:'')+' '+simOrig+' → '+(CURRENCIES[simDest]?CURRENCIES[simDest].flag:'')+' '+simDest+'</div></div>' +
-    '</div>' +
-    // Detail breakdown
-    '<div style="background:var(--bg3);border-radius:12px;padding:16px;font-size:11px;color:var(--gray);font-family:'JetBrains Mono',monospace;line-height:2;margin-bottom:14px">' +
-      'Tasa ref: '+fmt(tasaRef,dec)+' · Tu tasa: '+fmt(tasaCli,dec)+' · Ticket: '+currO+' '+fmt(ticket)+' · '+opsDay+' ops/día × '+daysMonth+' días = '+opsMonth+' ops/mes' +
-    '</div>' +
-    '<button class="btn-save" onclick="guardarSim()">💾 Guardar esta simulación</button>';
 }
 
 async function guardarSim() {
-  var margen   = parseFloat(document.getElementById('simMargen').value)    || 0;
-  var ticket   = parseFloat(document.getElementById('simTicket').value)    || 0;
-  var opsDay   = parseFloat(document.getElementById('simOpsDay').value)    || 0;
-  var daysMonth= parseFloat(document.getElementById('simDaysMonth').value) || 22;
-  var numOps   = Math.round(opsDay * daysMonth);
-  var notas    = document.getElementById('simNotas').value;
-  if (!ticket || !opsDay || !margen) { floatAlert('Completa todos los campos del negocio','','red'); return; }
+  var margen  = parseFloat(document.getElementById('simMargen').value) || 0;
+  var ticket  = parseFloat(document.getElementById('simTicket').value) || 0;
+  var numOps  = parseInt(document.getElementById('simNumOps').value)   || 0;
+  var notas   = document.getElementById('simNotas').value;
+  if (!ticket || !numOps) { floatAlert('Completa ticket y número de operaciones','','red'); return; }
   var d = await api('POST','/api/simular', {
     moneda_origen: simOrig, moneda_destino: simDest,
     margen_pct: margen, ticket_promedio: ticket,
-    num_operaciones: numOps, notas: 'ops/dia:'+opsDay+' dias:'+daysMonth+' '+notas
+    num_operaciones: numOps, notas: notas
   });
   if (d.error) { floatAlert('Error', d.error, 'red'); return; }
-  var currO = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
-  floatAlert('Simulación guardada', 'Margen mensual: ' + currO + ' ' + fmt(d.ganancia_proyectada), 'teal');
+  floatAlert('Simulación guardada', 'Ganancia proyectada: ' + CURRENCIES[simOrig].symbol + ' ' + fmt(d.ganancia_proyectada), 'teal');
 }
 
 async function loadHist() {
@@ -936,7 +862,7 @@ async function loadHist() {
     return '<tr>' +
       '<td><span class="badge b-teal">'+r.par+'</span></td>' +
       '<td style="font-family:monospace">'+fmt(r.tasa_referencia,4)+'</td>' +
-      '<td style="font-family:monospace;color:var(--blue)">'+fmt(r.tasa_cliente,4)+'</td>' +
+      '<td style="font-family:monospace;color:var(--teal)">'+fmt(r.tasa_cliente,4)+'</td>' +
       '<td>'+fmt(r.margen_pct,2)+'%</td>' +
       '<td style="font-family:monospace">'+fmt(r.volumen_total)+'</td>' +
       '<td style="font-family:monospace;color:var(--green);font-weight:600">'+fmt(r.ganancia_proyectada)+'</td>' +
@@ -954,7 +880,7 @@ async function saveTasa() {
   msg.style.display = 'block';
   if (d.ok) {
     msg.textContent = 'Tasa guardada: '+par+' = '+tasa;
-    msg.style.color = 'var(--blue)';
+    msg.style.color = 'var(--teal)';
     loadRates();
   } else {
     msg.textContent = d.error || 'Error';
@@ -971,27 +897,8 @@ function showPage(p) {
   if (p==='rates') loadRates();
 }
 
-function calcMonthly() {
-  var ticket  = parseFloat(document.getElementById('mTicket').value) || 0;
-  var opsDay  = parseFloat(document.getElementById('mOpsDay').value) || 0;
-  var days    = parseFloat(document.getElementById('mDays').value)   || 22;
-  var margen  = parseFloat(document.getElementById('mMargen').value) || 0;
-  if (!ticket || !opsDay || !margen) { document.getElementById('monthlyResult').style.display='none'; return; }
-  var opsMonth   = opsDay * days;
-  var volMonth   = ticket * opsMonth;
-  var margenMonth = volMonth * (margen / 100);
-  var margenYear  = margenMonth * 12;
-  var curr = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
-  document.getElementById('mResOps').textContent     = opsMonth.toLocaleString('es-CO');
-  document.getElementById('mResVol').textContent     = curr + ' ' + fmt(volMonth);
-  document.getElementById('mResMargen').textContent  = curr + ' ' + fmt(margenMonth);
-  document.getElementById('mResAnual').textContent   = curr + ' ' + fmt(margenYear);
-  document.getElementById('mResFormula').textContent = opsDay + ' ops/día × ' + days + ' días × ' + curr + ' ' + fmt(ticket) + ' ticket × ' + margen + '% margen = ' + curr + ' ' + fmt(margenMonth) + '/mes';
-  document.getElementById('monthlyResult').style.display = 'block';
-}
-
 function floatAlert(title, body, type) {
-  var colors = {teal:['var(--blue-l)','var(--blue)','✅'], red:['var(--red-l)','var(--red)','❌'], orange:['var(--orange-l)','var(--orange)','⚠️']};
+  var colors = {teal:['var(--teal-l)','var(--teal)','✅'], red:['var(--red-l)','var(--red)','❌'], orange:['var(--orange-l)','var(--orange)','⚠️']};
   var c = colors[type]||colors.teal;
   var el = document.createElement('div');
   el.className = 'float-alert';
