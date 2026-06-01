@@ -88,6 +88,7 @@ const FALLBACK_RATES = {
   PEN: 3.72,
   BOB: 6.91,
   VES: 46.50,
+  CNY: 7.24,
   USD: 1.00,
 };
 
@@ -112,6 +113,7 @@ async function refreshFX() {
             PEN: parseFloat(rates.PEN) || FALLBACK_RATES.PEN,
             BOB: parseFloat(rates.BOB) || FALLBACK_RATES.BOB,
             VES: parseFloat(rates.VES) || FALLBACK_RATES.VES,
+            CNY: parseFloat(rates.CNY) || FALLBACK_RATES.CNY,
             USD: 1.00,
           },
           source: 'api',
@@ -484,7 +486,7 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
           <div class="flag-chip">🇵🇪 Sol Peruano</div>
           <div class="flag-chip">🇧🇴 Boliviano</div>
           <div class="flag-chip">🇻🇪 Bolívar Venezolano</div>
-          <div class="flag-chip">🇺🇸 Dólar USD</div>
+          <div class="flag-chip">🇨🇳 Yuan Chino</div>
         </div>
       </div>
 
@@ -596,7 +598,7 @@ code,pre,.mono,.sim-val,.ticker-rate,.crTasaRef,.crTasaCli,.crMontoDest{font-fam
         <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
           <div class="fg" style="margin:0">
             <label>Moneda</label>
-            <select class="fi" id="manPar"><option value="COP">COP</option><option value="CLP">CLP</option><option value="PEN">PEN</option><option value="BOB">BOB</option><option value="VES">VES</option></select>
+            <select class="fi" id="manPar"><option value="COP">COP</option><option value="CLP">CLP</option><option value="PEN">PEN</option><option value="BOB">BOB</option><option value="VES">VES</option><option value="CNY">CNY</option></select>
           </div>
           <div class="fg" style="margin:0">
             <label>Tasa vs USD</label>
@@ -755,12 +757,13 @@ let fxData = {};
 let simOrig = 'USD', simDest = 'COP';
 
 const CURRENCIES = {
-  USD: { flag:'🇺🇸', name:'Dólar USD',       symbol:'$'   },
   COP: { flag:'🇨🇴', name:'Peso Colombiano',  symbol:'$'   },
   CLP: { flag:'🇨🇱', name:'Peso Chileno',     symbol:'$'   },
   PEN: { flag:'🇵🇪', name:'Sol Peruano',      symbol:'S/'  },
   BOB: { flag:'🇧🇴', name:'Boliviano',        symbol:'Bs.' },
   VES: { flag:'🇻🇪', name:'Bolívar',          symbol:'Bs.' },
+  CNY: { flag:'🇨🇳', name:'Yuan Chino',       symbol:'¥'   },
+  USD: { flag:'🇺🇸', name:'Dólar USD',        symbol:'$'   },
 };
 
 const fmt = function(n, dec) {
@@ -821,7 +824,7 @@ async function loadRates() {
 }
 
 function renderTicker(rates) {
-  var pairs = [['USD','COP'],['USD','CLP'],['USD','PEN'],['USD','BOB'],['USD','VES'],['COP','CLP'],['COP','PEN']];
+  var pairs = [['COP','CLP'],['COP','PEN'],['COP','BOB'],['COP','VES'],['COP','CNY'],['USD','COP'],['CLP','PEN']];
   document.getElementById('ticker').innerHTML = pairs.map(function(p) {
     var r = (rates[p[1]]||1) / (rates[p[0]]||1);
     return '<div class="ticker-item">' +
@@ -833,7 +836,7 @@ function renderTicker(rates) {
 }
 
 function renderRatesGrid(rates) {
-  var currs = Object.keys(CURRENCIES).filter(function(c){return c!=='USD';});
+  var currs = ['COP','CLP','PEN','BOB','VES','CNY'];
   document.getElementById('ratesGrid').innerHTML = currs.map(function(c) {
     var r = rates[c] || 0;
     var info = CURRENCIES[c];
