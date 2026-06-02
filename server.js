@@ -1,8 +1,9 @@
 'use strict';
 // ─────────────────────────────────────────────────────────────
-//  Buda.com Cross-Border Payments · Server v2.1
+//  Buda.com Cross-Border Payments · Server v1.0
 //  Simulador FX multi-divisa LATAM
 // ─────────────────────────────────────────────────────────────
+if (!process.env.PGPASSWORD) process.env.PGPASSWORD = '';
 
 const express  = require('express');
 const axios    = require('axios');
@@ -333,7 +334,7 @@ El usuario actual es: ${req.user.nombre} de ${req.user.empresa || 'su empresa'}.
 });
 
 // ── Portal Web ────────────────────────────────────────────────
-app.get('/', (req, res) => { res.setHeader('Content-Type','text/html'); res.send(portal()); });
+app.get('/', (req, res) => { res.setHeader('Content-Type','text/html; charset=utf-8'); res.send(portal()); });
 
 // ── Start ─────────────────────────────────────────────────────
 async function start() {
