@@ -878,7 +878,7 @@ function mdToHtml(text) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/\`(.+?)\`/g,'<code>$1</code>')
+    .replace(/[\x60](.+?)[\x60]/g,'<code>$1</code>')
     .replace(/
 
 /g,'</p><p>')
