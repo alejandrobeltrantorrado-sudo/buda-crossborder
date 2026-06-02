@@ -765,15 +765,13 @@ function setDest(c){simDest=c;buildCurrencySelectors();calcSim();}
 // ── Chat ───────────────────────────────────────────────────────
 function showWelcome() {
   var name = USER ? USER.nombre.split(' ')[0] : 'bienvenido';
-  addBotMsg('Hola, **' + name + '** 👋
-
-Soy el asistente de **Buda Cross-Border Payments**. Puedo ayudarte a:
-
-- **Consultar tasas** de cambio en tiempo real entre nuestros corredores
-- **Simular tu modelo de negocio** — cuánto volumen y margen puedes generar
-- **Responder preguntas** sobre el servicio, la API y los corredores activos
-
-¿En qué puedo ayudarte hoy?');
+  var msg = 'Hola, **' + name + '** 👋\n\n' +
+    'Soy el asistente de **Buda Cross-Border Payments**. Puedo ayudarte a:\n\n' +
+    '- **Consultar tasas** de cambio en tiempo real entre nuestros corredores\n' +
+    '- **Simular tu modelo de negocio** y proyectar tus ingresos\n' +
+    '- **Responder preguntas** sobre el servicio, la API y los corredores activos\n\n' +
+    '¿En qué puedo ayudarte hoy?';
+  addBotMsg(msg);
 }
 
 function renderSuggestions() {
