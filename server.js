@@ -270,6 +270,69 @@ app.get('/reset-admin', async (req, res) => {
 
 app.get('/health', (req, res) => res.json({ status: 'ok', fx: fxState.source, updatedAt: fxState.updatedAt }));
 
+// ── Chat endpoint (Anthropic API) ─────────────────────────────
+app.post('/api/chat', authMw, async (req, res) => {
+  const { messages } = req.body;
+  if (!messages || !messages.length) return res.status(400).json({ error: 'Sin mensajes' });
+
+  const rates = fxState.rates;
+  const systemPrompt = `Eres el asistente de Buda.com Cross-Border Payments, un servicio B2B de pagos internacionales entre Latinoamérica y Asia.
+
+Tu rol es ayudar a empresas a entender el servicio, calcular tasas de cambio, simular volúmenes de negocio y proyectar ingresos.
+
+TASAS DE CAMBIO ACTUALES (base USD, fuente: ${fxState.source}, actualizado: ${fxState.updatedAt}):
+- COP (Peso Colombiano): ${rates.COP} por USD
+- CLP (Peso Chileno): ${rates.CLP} por USD
+- PEN (Sol Peruano): ${rates.PEN} por USD
+- BOB (Boliviano): ${rates.BOB} por USD
+- VES (Bolívar Venezolano): ${rates.VES} por USD
+- CNY (Yuan Chino): ${rates.CNY} por USD
+
+CÓMO CALCULAR TASAS CRUZADAS:
+Para convertir entre dos monedas no-USD: tasa = tasa_destino / tasa_origen
+Ejemplo COP→CLP: ${rates.CLP} / ${rates.COP} = ${(rates.CLP/rates.COP).toFixed(6)} CLP por COP
+
+CÓMO SIMULAR NEGOCIOS:
+- Volumen mensual = ticket_promedio × ops_por_día × días_al_mes
+- Margen mensual = volumen × (margen_pct / 100)
+- Proyección anual = margen_mensual × 12
+
+CORREDORES ACTIVOS: Colombia↔Chile, Colombia↔Perú, Colombia↔Bolivia, Colombia↔Venezuela, Colombia↔China, y más.
+
+REGLAS:
+- Nunca menciones criptomonedas, USDT, USDC, blockchain o términos crypto
+- Habla siempre en términos de "rieles de pago", "liquidación instantánea", "infraestructura de pagos"
+- Responde en español
+- Sé conciso y directo — máximo 3-4 párrafos
+- Cuando hagas cálculos, muéstralos paso a paso con los números
+- Si el usuario pide una simulación de negocio, incluye: tasa de referencia, tasa con margen, volumen mensual, margen mensual y proyección anual
+- Al final de simulaciones, sugiere guardarla en el simulador
+
+El usuario actual es: ${req.user.nombre} de ${req.user.empresa || 'su empresa'}.`;
+
+  try {
+    const r = await axios.post('https://api.anthropic.com/v1/messages', {
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: messages,
+    }, {
+      headers: {
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      timeout: 30000,
+    });
+    const text = r.data.content && r.data.content[0] && r.data.content[0].text || '';
+    res.json({ response: text });
+  } catch(e) {
+    const msg = e.response && e.response.data ? JSON.stringify(e.response.data) : e.message;
+    console.error('[chat] Error:', msg);
+    res.status(500).json({ error: 'Error al conectar con el asistente: ' + msg });
+  }
+});
+
 // ── Portal Web ────────────────────────────────────────────────
 app.get('/', (req, res) => { res.setHeader('Content-Type','text/html'); res.send(portal()); });
 
@@ -292,131 +355,143 @@ function portal() {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Buda.com · Cross-Border Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#F7F8FA;--bg2:#FFFFFF;--bg3:#F0F2F5;
-  --teal:#00837A;--teal-d:#006B63;--teal-l:#E6F5F4;
-  --orange:#FF6B35;--orange-l:#FFF3EE;
-  --text:#1A1D2E;--gray:#6B7280;--border:#E5E7EB;
-  --green:#1A7A4A;--green-l:#EDFAF4;
-  --red:#C0392B;--red-l:#FFF0EE;
+  --bg:#F9FAFB;--bg2:#FFFFFF;--bg3:#F3F4F6;
+  --blue:#1A56DB;--blue-d:#1447BB;--blue-l:#EBF5FF;--blue-border:#BFDBFE;
+  --text:#111928;--gray:#6B7280;--border:#E5E7EB;
+  --green:#057A55;--green-l:#F3FAF7;
+  --red:#E02424;--red-l:#FDF2F2;
+  --chat-user:#1A56DB;--chat-bot:#FFFFFF;
 }
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
 
 /* Nav */
-.nav{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 32px;height:60px;display:flex;align-items:center;gap:0;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06)}
-.nav-logo{display:flex;align-items:center;gap:10px;margin-right:40px}
-.nav-logo-icon{width:36px;height:36px;background:var(--teal);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
-.nav-logo-text{font-size:16px;font-weight:700;color:var(--text)}
-.nav-logo-sub{font-size:10px;color:var(--gray);font-weight:400}
-.nav-tabs{display:flex;flex:1;gap:0}
-.nav-tab{padding:0 20px;height:60px;display:flex;align-items:center;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
-.nav-tab:hover{color:var(--teal)}
-.nav-tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:500}
+.nav{background:#fff;border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.logo{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px;cursor:pointer}
+.logo span{color:var(--blue)}
+.logo-sub{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-left:8px;font-weight:500}
 .nav-r{margin-left:auto;display:flex;align-items:center;gap:10px}
-.rates-badge{background:var(--teal-l);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--teal);display:flex;align-items:center;gap:5px}
-.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--teal)}
-.user-chip{font-size:12px;color:var(--gray);display:flex;align-items:center;gap:6px}
-.av{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#fff}
-.btn-sm-nav{padding:5px 14px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--gray);cursor:pointer;font-size:11px}
+.rates-pill{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px}
+.rates-dot{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.user-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray)}
+.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.btn-nav{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;font-size:11px;font-family:'Inter',sans-serif}
+.btn-nav:hover{border-color:var(--blue);color:var(--blue)}
+.nav-tabs{display:flex;gap:0;margin-left:16px}
+.ntab{padding:0 14px;height:56px;display:flex;align-items:center;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.ntab:hover{color:var(--blue)}
+.ntab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
 
 /* Login */
-.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal-l) 0%,#fff 60%)}
-.login-card{background:#fff;border-radius:20px;padding:40px;width:380px;box-shadow:0 8px 40px rgba(0,131,122,.12)}
-.login-brand{text-align:center;margin-bottom:28px}
-.login-icon{width:56px;height:56px;background:var(--teal);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#fff;margin-bottom:12px}
-.login-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
-.login-sub{font-size:12px;color:var(--gray)}
-.fg{margin-bottom:14px}
-.fg label{display:block;font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
-.fi{width:100%;padding:10px 14px;border-radius:9px;border:1.5px solid var(--border);font-size:13px;color:var(--text);transition:.15s}
-.fi:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,131,122,.1)}
-.btn-p{width:100%;padding:12px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;margin-top:4px}
-.btn-p:hover{background:var(--teal-d)}
-.btn-sec{width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:var(--gray);font-size:13px;cursor:pointer}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:40px;width:360px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo-text{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-1px}
+.login-logo-text span{color:var(--blue)}
+.login-sub{font-size:12px;color:var(--gray);margin-top:4px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
+.fi{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;color:var(--text);font-family:'Inter',sans-serif;transition:.15s;background:#fff}
+.fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.btn-primary{width:100%;padding:11px;border-radius:9px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:.15s}
+.btn-primary:hover{background:var(--blue-d)}
 
 /* Main layout */
-.main{max-width:1100px;margin:0 auto;padding:24px 16px}
-.page{display:none}.page.active{display:block}
+.main{display:flex;height:calc(100vh - 56px)}
 
-/* Hero */
-.hero{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-d) 100%);border-radius:20px;padding:40px 48px;color:#fff;margin-bottom:24px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;right:-40px;top:-40px;width:300px;height:300px;background:rgba(255,255,255,.05);border-radius:50%}
-.hero-tag{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:11px;display:inline-block;margin-bottom:12px}
-.hero-title{font-size:32px;font-weight:700;margin-bottom:8px;line-height:1.2}
-.hero-sub{font-size:14px;opacity:.85;max-width:500px;line-height:1.6}
-.hero-flags{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}
-.flag-chip{background:rgba(255,255,255,.15);border-radius:20px;padding:5px 12px;font-size:12px;display:flex;align-items:center;gap:5px;backdrop-filter:blur(4px)}
+/* Left panel - info */
+.left-panel{width:380px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
+.left-panel.hidden{display:none}
 
-/* Rates ticker */
-.ticker{display:flex;gap:10px;margin-bottom:20px;overflow-x:auto;padding-bottom:4px}
-.ticker-item{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:140px;flex-shrink:0}
-.ticker-par{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
-.ticker-rate{font-size:16px;font-weight:700;font-family:monospace;color:var(--text)}
-.ticker-src{font-size:9px;color:var(--gray);margin-top:2px}
+/* Info section */
+.info-section{padding:24px}
+.info-hero{background:linear-gradient(135deg,var(--blue) 0%,var(--blue-d) 100%);border-radius:14px;padding:24px;color:#fff;margin-bottom:16px}
+.info-hero-tag{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:8px}
+.info-hero-title{font-size:22px;font-weight:800;line-height:1.25;margin-bottom:8px;letter-spacing:-.3px}
+.info-hero-sub{font-size:12px;opacity:.8;line-height:1.6}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.metric{background:var(--bg3);border-radius:10px;padding:12px;text-align:center}
+.metric-val{font-size:18px;font-weight:800;color:var(--blue);font-family:monospace}
+.metric-lbl{font-size:10px;color:var(--gray);margin-top:2px}
+.corridor-list{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+.corridor{background:var(--bg3);border-radius:8px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.corridor-name{font-size:12px;font-weight:500}
+.corridor-rate{font-size:12px;font-family:monospace;color:var(--blue);font-weight:600}
+.corridor-badge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--green-l);color:var(--green)}
+.section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:10px}
 
-/* Cards grid */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:20px}
-.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:14px}
+/* Chat panel */
+.chat-panel{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+.chat-header{padding:14px 20px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.chat-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0}
+.chat-header-info{flex:1}
+.chat-header-name{font-size:14px;font-weight:600}
+.chat-header-sub{font-size:11px;color:var(--gray)}
+.chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.msg{display:flex;gap:10px;max-width:75%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.bot{align-self:flex-start}
+.msg-avatar{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px}
+.msg.bot .msg-avatar{background:linear-gradient(135deg,var(--blue),var(--blue-d));color:#fff}
+.msg.user .msg-avatar{background:var(--bg3);color:var(--gray)}
+.msg-bubble{padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.6;max-width:100%}
+.msg.bot .msg-bubble{background:#fff;border:1px solid var(--border);border-top-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.msg.user .msg-bubble{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.msg-bubble p{margin-bottom:8px}
+.msg-bubble p:last-child{margin:0}
+.msg-bubble strong{font-weight:600}
+.msg-bubble code{background:rgba(0,0,0,.06);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px}
+.msg.user .msg-bubble code{background:rgba(255,255,255,.2)}
+.typing{display:flex;gap:4px;align-items:center;padding:12px 16px;background:#fff;border:1px solid var(--border);border-radius:14px;border-top-left-radius:4px;width:60px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--gray);animation:bounce .8s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
 
-/* Simulator */
-.sim-result{background:linear-gradient(135deg,var(--teal-l),#fff);border:1.5px solid var(--teal);border-radius:14px;padding:20px;margin-top:14px}
-.sim-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(0,131,122,.1)}
-.sim-row:last-child{border:none;font-size:15px;font-weight:700;padding-top:12px;margin-top:4px}
-.sim-key{font-size:12px;color:var(--gray)}
-.sim-val{font-size:13px;font-weight:600;font-family:monospace;color:var(--text)}
-.highlight-val{color:var(--teal);font-size:16px}
-.btn-save{width:100%;padding:11px;border-radius:10px;border:none;background:var(--teal);color:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-top:12px}
-.btn-save:hover{background:var(--teal-d)}
+/* Suggestions */
+.suggestions{padding:0 20px 12px;display:flex;gap:8px;flex-wrap:wrap}
+.sug{padding:7px 12px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--gray);cursor:pointer;transition:.15s;white-space:nowrap}
+.sug:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
 
-/* History table */
-.tbl{width:100%;border-collapse:collapse;font-size:12px}
-.tbl th{text-align:left;padding:7px 10px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border);font-weight:500}
-.tbl td{padding:9px 10px;border-bottom:1px solid var(--border)}
-.tbl tr:last-child td{border:none}
-.tbl tr:hover td{background:var(--bg3)}
-.badge{display:inline-flex;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:500}
-.b-teal{background:var(--teal-l);color:var(--teal)}
-.b-orange{background:var(--orange-l);color:var(--orange)}
+/* Chat input */
+.chat-input-wrap{padding:12px 16px;background:#fff;border-top:1px solid var(--border)}
+.chat-input-row{display:flex;gap:8px;align-items:flex-end;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:8px 8px 8px 14px;transition:.15s}
+.chat-input-row:focus-within{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-l)}
+.chat-textarea{flex:1;border:none;background:transparent;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:none;outline:none;min-height:20px;max-height:120px;line-height:1.5}
+.chat-textarea::placeholder{color:var(--gray)}
+.send-btn{width:34px;height:34px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;font-size:16px}
+.send-btn:hover{background:var(--blue-d)}
+.send-btn:disabled{background:var(--border);cursor:not-allowed}
 
-/* Currency selector */
-.curr-select{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.curr-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:5px}
-.curr-btn.active{border-color:var(--teal);background:var(--teal-l);color:var(--teal);font-weight:500}
-.curr-btn:hover{border-color:var(--teal)}
-
-/* Info page */
-.info-hero{background:linear-gradient(135deg,#1A1D2E,#2D3050);border-radius:20px;padding:48px;color:#fff;margin-bottom:24px;text-align:center}
-.info-title{font-size:28px;font-weight:700;margin-bottom:12px}
-.info-sub{font-size:15px;opacity:.7;max-width:560px;margin:0 auto;line-height:1.7}
-.info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.info-card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
-.info-icon{font-size:32px;margin-bottom:12px}
-.info-card-title{font-size:14px;font-weight:600;margin-bottom:8px;color:var(--text)}
-.info-card-text{font-size:12px;color:var(--gray);line-height:1.6}
-.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative}
-.step-num{width:28px;height:28px;background:var(--teal);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;margin-bottom:10px}
-.step-title{font-size:13px;font-weight:600;margin-bottom:6px}
-.step-text{font-size:11px;color:var(--gray);line-height:1.5}
-.corr{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-.corr-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px}
-.corr-flag{font-size:28px;margin-bottom:8px}
-.corr-name{font-size:13px;font-weight:600;margin-bottom:4px}
-.corr-text{font-size:11px;color:var(--gray);line-height:1.5}
+/* Simulator tab */
+.sim-panel{flex:1;overflow-y:auto;padding:24px;background:var(--bg)}
+.sim-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.sim-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:14px}
+.sim-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.curr-btns{display:flex;gap:6px;flex-wrap:wrap}
+.curr-btn{padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:11px;cursor:pointer;transition:.15s;color:var(--gray)}
+.curr-btn.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue);font-weight:600}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--bg3);border-radius:10px;padding:14px;text-align:center}
+.kpi.blue{background:var(--blue-l);border:1px solid var(--blue-border)}
+.kpi-val{font-size:22px;font-weight:800;font-family:monospace}
+.kpi.blue .kpi-val{color:var(--blue)}
+.kpi-lbl{font-size:10px;color:var(--gray);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.annual-banner{background:var(--text);border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.btn-save{width:100%;padding:10px;border-radius:9px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-save:hover{background:var(--blue-d)}
 
 /* Float alert */
-.float-alert{position:fixed;top:16px;right:16px;z-index:9999;max-width:300px;border-radius:10px;padding:12px 14px;box-shadow:0 4px 24px rgba(0,0,0,.12);animation:slideIn .25s ease;display:flex;gap:8px;align-items:flex-start}
+.float-alert{position:fixed;top:16px;right:16px;z-index:9999;max-width:300px;border-radius:10px;padding:12px 14px;box-shadow:0 4px 24px rgba(0,0,0,.1);animation:slideIn .25s ease;display:flex;gap:8px;align-items:flex-start}
 @keyframes slideIn{from{transform:translateX(110%)}to{transform:translateX(0)}}
 
-/* Responsive */
-@media(max-width:700px){
-  .two-col,.three-col,.info-grid,.steps,.corr{grid-template-columns:1fr}
-  .hero{padding:24px}
-  .hero-title{font-size:22px}
+@media(max-width:768px){
+  .left-panel{display:none}
+  .logo-sub{display:none}
 }
 </style>
 </head>
@@ -426,283 +501,167 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 <div id="loginWrap" style="display:none">
   <div class="login-wrap">
     <div class="login-card">
-      <div class="login-brand">
-        <div class="login-icon">B</div>
-        <div class="login-title">Buda.com</div>
-        <div class="login-sub">Cross-Border Payments · Simulador FX</div>
+      <div class="login-logo">
+        <div class="login-logo-text">buda<span>.</span>com</div>
+        <div class="login-sub">Cross-Border Payments</div>
       </div>
-      <div class="fg"><label>Email</label><input class="fi" type="email" id="lEmail" autocomplete="off" placeholder="tu@empresa.com"></div>
-      <div class="fg"><label>Contraseña</label><input class="fi" type="password" id="lPass" autocomplete="new-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
-      <button class="btn-p" onclick="login()">Ingresar</button>
+      <div class="fg"><label>Email</label><input class="fi" type="email" id="lEmail" placeholder="tu@empresa.com" autocomplete="off"></div>
+      <div class="fg"><label>Contraseña</label><input class="fi" type="password" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+      <button class="btn-primary" onclick="login()">Ingresar</button>
       <div id="lErr" style="font-size:11px;color:var(--red);text-align:center;margin-top:10px"></div>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--teal)">Contáctanos</a></div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">¿No tienes acceso? <a href="mailto:otc@buda.com" style="color:var(--blue)">Contáctanos</a></div>
     </div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="appWrap" style="display:none">
-  <!-- Nav -->
   <nav class="nav">
-    <div class="nav-logo">
-      <div class="nav-logo-icon">B</div>
-      <div>
-        <div class="nav-logo-text">Buda.com</div>
-        <div class="nav-logo-sub">Cross-Border Payments</div>
-      </div>
-    </div>
+    <div class="logo" onclick="switchView('chat')">buda<span>.</span>com <span class="logo-sub">Cross-Border</span></div>
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="showPage('sim')">Simulador</div>
-      <div class="nav-tab" onclick="showPage('rates')">Tasas</div>
-      <div class="nav-tab" onclick="showPage('hist')">Mis simulaciones</div>
-      <div class="nav-tab" onclick="showPage('info')">¿Qué es Cross-Border?</div>
+      <div class="ntab active" id="ntab-chat" onclick="switchView('chat')">Asistente</div>
+      <div class="ntab" id="ntab-sim" onclick="switchView('sim')">Simulador</div>
+      <div class="ntab" id="ntab-hist" onclick="switchView('hist');loadHist()">Mis simulaciones</div>
     </div>
     <div class="nav-r">
-      <div class="rates-badge"><div class="rates-dot" id="ratesDot"></div><span id="ratesSource">Cargando...</span></div>
+      <div class="rates-pill"><div class="rates-dot"></div><span id="ratesSource">Cargando...</span></div>
       <div class="user-chip"><div class="av" id="userAv">B</div><span id="userName"></span></div>
-      <button class="btn-sm-nav" onclick="logout()">Salir</button>
+      <button class="btn-nav" onclick="logout()">Salir</button>
     </div>
   </nav>
 
-  <!-- Content -->
-  <div class="main">
-
-    <!-- SIMULADOR -->
-    <div class="page active" id="page-sim">
-      <div class="hero">
-        <div class="hero-tag">⚡ Simulador en tiempo real</div>
-        <div class="hero-title">Cotiza tu operación<br>cross-border</div>
-        <div class="hero-sub">Calcula el tipo de cambio, tu margen y el volumen proyectado para operaciones entre países de Latinoamérica.</div>
-        <div class="hero-flags">
-          <div class="flag-chip">🇨🇴 Peso Colombiano</div>
-          <div class="flag-chip">🇨🇱 Peso Chileno</div>
-          <div class="flag-chip">🇵🇪 Sol Peruano</div>
-          <div class="flag-chip">🇧🇴 Boliviano</div>
-          <div class="flag-chip">🇻🇪 Bolívar Venezolano</div>
-          <div class="flag-chip">🇺🇸 Dólar USD</div>
+  <!-- CHAT VIEW -->
+  <div class="main" id="view-chat">
+    <!-- Left panel: info + rates -->
+    <div class="left-panel" id="leftPanel">
+      <div class="info-section">
+        <div class="info-hero">
+          <div class="info-hero-tag">B2B · API-first · LATAM & Asia</div>
+          <div class="info-hero-title">Pagos internacionales en minutos</div>
+          <div class="info-hero-sub">Una sola integración para operar en 6 países. Sin bancos corresponsales, sin días de espera.</div>
         </div>
-      </div>
-
-      <!-- Ticker -->
-      <div class="ticker" id="ticker"></div>
-
-      <div class="two-col">
-        <!-- Simulator form -->
-        <div class="card">
-          <div class="card-title">Parámetros de la operación</div>
-
-          <div class="fg">
-            <label>Moneda origen</label>
-            <div class="curr-select" id="origSelect"></div>
-          </div>
-          <div class="fg">
-            <label>Moneda destino</label>
-            <div class="curr-select" id="destSelect"></div>
-          </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-            <div class="fg">
-              <label>Ticket promedio</label>
-              <input class="fi" type="number" id="simTicket" placeholder="5.000.000" oninput="calcSim()">
-            </div>
-            <div class="fg">
-              <label>Ops por día</label>
-              <input class="fi" type="number" id="simOpsDay" placeholder="10" oninput="calcSim()">
-            </div>
-            <div class="fg">
-              <label>Días al mes</label>
-              <input class="fi" type="number" id="simDaysMonth" placeholder="22" oninput="calcSim()">
-            </div>
-            <div class="fg">
-              <label>Tu margen (%)</label>
-              <input class="fi" type="number" id="simMargen" placeholder="1.5" step="0.1" oninput="calcSim()">
-            </div>
-          </div>
-          <input type="hidden" id="simMonto" value="0">
-          <input type="hidden" id="simNumOps" value="0">
-
-          <!-- Resultado cotización -->
-          <div id="cotResult" style="display:none;background:var(--teal-l);border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:10px;color:var(--teal);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;font-weight:600">Resultado de conversión</div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:12px;color:var(--gray)">Tasa referencia</span>
-              <span style="font-size:13px;font-weight:600;font-family:monospace" id="crTasaRef">—</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-              <span style="font-size:12px;color:var(--gray)">Tu tasa (c/margen)</span>
-              <span style="font-size:14px;font-weight:700;font-family:monospace;color:var(--teal)" id="crTasaCli">—</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;border-top:1px solid rgba(0,131,122,.15);padding-top:8px;margin-top:4px">
-              <span style="font-size:12px;color:var(--gray)" id="crLabel">Monto destino</span>
-              <span style="font-size:16px;font-weight:700;color:var(--teal);font-family:monospace" id="crMontoDest">—</span>
-            </div>
-          </div>
-
-          <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
-            <div class="fg">
-              <label>Notas (opcional)</label>
-              <input class="fi" type="text" id="simNotas" placeholder="Ej: remesas sector salud Colombia-Chile">
-            </div>
-          </div>
+        <div class="metric-row">
+          <div class="metric"><div class="metric-val">&lt;5min</div><div class="metric-lbl">Liquidación</div></div>
+          <div class="metric"><div class="metric-val">1 API</div><div class="metric-lbl">Integración</div></div>
+          <div class="metric"><div class="metric-val">6 países</div><div class="metric-lbl">Activos</div></div>
         </div>
-
-        <!-- Results -->
-        <div>
-          <div class="card" style="margin-bottom:14px">
-            <div class="card-title">Resumen de la simulación</div>
-            <div id="simResult" style="color:var(--gray);font-size:12px;text-align:center;padding:20px 0">
-              Completa los campos para ver la proyección
-            </div>
-          </div>
-          <div class="card" style="background:linear-gradient(135deg,#1A1D2E,#2D3050);border:none">
-            <div class="card-title" style="color:rgba(255,255,255,.5)">¿Por qué Buda.com?</div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:18px">⚡</span>
-                <div><div style="font-size:12px;font-weight:600;color:#fff">Liquidez inmediata</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Operaciones en minutos, no días</div></div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:18px">🔒</span>
-                <div><div style="font-size:12px;font-weight:600;color:#fff">Regulado y seguro</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Cumplimiento AML/KYC en todos los países</div></div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:18px">📊</span>
-                <div><div style="font-size:12px;font-weight:600;color:#fff">Tasas competitivas</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">Referencia de mercado + tu margen</div></div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:18px">🌎</span>
-                <div><div style="font-size:12px;font-weight:600;color:#fff">5 países LATAM</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px">CO · CL · PE · BO · VE</div></div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="section-title">Tasas en tiempo real</div>
+        <div class="corridor-list" id="corridorRates"></div>
+        <div style="font-size:10px;color:var(--gray);text-align:center;margin-top:6px" id="ratesTime"></div>
       </div>
     </div>
 
-    <!-- TASAS -->
-    <div class="page" id="page-rates">
-      <div style="margin-bottom:20px">
-        <div style="font-size:20px;font-weight:700;margin-bottom:4px">Tasas de referencia</div>
-        <div style="font-size:12px;color:var(--gray)" id="ratesUpdated"></div>
-      </div>
-      <div class="three-col" id="ratesGrid"></div>
-      <div class="card" style="max-width:480px">
-        <div class="card-title">Actualizar tasa manual</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
-          <div class="fg" style="margin:0">
-            <label>Moneda</label>
-            <select class="fi" id="manPar"><option value="COP">COP</option><option value="CLP">CLP</option><option value="PEN">PEN</option><option value="BOB">BOB</option><option value="VES">VES</option></select>
-          </div>
-          <div class="fg" style="margin:0">
-            <label>Tasa vs USD</label>
-            <input class="fi" id="manTasa" type="number" placeholder="4180">
-          </div>
-          <button class="btn-p" style="padding:10px 16px;width:auto;margin:0" onclick="saveTasa()">Guardar</button>
+    <!-- Chat -->
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="chat-avatar">B</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">Asistente Buda Cross-Border</div>
+          <div class="chat-header-sub">Tasas en tiempo real · Simulaciones · Consultas sobre el servicio</div>
         </div>
-        <div id="tasaMsg" style="font-size:11px;margin-top:8px;display:none"></div>
-      </div>
-    </div>
-
-    <!-- HISTORIAL -->
-    <div class="page" id="page-hist">
-      <div style="font-size:20px;font-weight:700;margin-bottom:16px">Mis simulaciones</div>
-      <div class="card" style="padding:0;overflow:hidden">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>Par</th><th>Tasa ref.</th><th>Tu tasa</th><th>Margen</th><th>Volumen</th><th>Ganancia proy.</th><th>Fecha</th></tr></thead>
-            <tbody id="histBody"></tbody>
-          </table>
+        <div style="display:flex;gap:8px">
+          <button class="btn-nav" onclick="clearChat()">Nueva conversación</button>
         </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="chat-input-wrap">
+        <div class="chat-input-row">
+          <textarea class="chat-textarea" id="chatInput" placeholder="Pregunta sobre tasas, simula tu negocio, consulta corredores..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMsg()">↑</button>
+        </div>
+        <div style="font-size:10px;color:var(--gray);text-align:center;margin-top:6px">Shift+Enter para nueva línea · Enter para enviar</div>
       </div>
     </div>
+  </div>
 
-    <!-- INFO -->
-    <div class="page" id="page-info">
-      <div class="info-hero">
-        <div style="font-size:40px;margin-bottom:12px">🌎</div>
-        <div class="info-title">Cross-Border Payments con Buda.com</div>
-        <div class="info-sub">Transferencias internacionales rápidas, seguras y a precio de mercado entre los principales países de Latinoamérica, usando criptomonedas como riel de liquidación.</div>
+  <!-- SIMULATOR VIEW -->
+  <div style="display:none;height:calc(100vh - 56px);overflow-y:auto" id="view-sim">
+    <div class="sim-panel">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Simulador de negocio</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px">Proyecta tu volumen mensual y anual en cualquier corredor</div>
+      <div class="sim-card">
+        <div class="sim-title">Corredor</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">
+          <div><div style="font-size:11px;color:var(--gray);margin-bottom:6px">Moneda origen</div><div class="curr-btns" id="origSelect"></div></div>
+          <div style="font-size:20px;color:var(--gray);margin-top:16px">→</div>
+          <div><div style="font-size:11px;color:var(--gray);margin-bottom:6px">Moneda destino</div><div class="curr-btns" id="destSelect"></div></div>
+        </div>
+        <div id="tasaBanner" style="display:none;background:var(--blue-l);border:1px solid var(--blue-border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);font-family:monospace"></div>
       </div>
-
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Cómo funciona?</div>
-      <div class="steps">
-        <div class="step">
-          <div class="step-num">1</div>
-          <div class="step-title">El cliente envía fondos</div>
-          <div class="step-text">Tu cliente en el país de origen deposita en moneda local a una cuenta local de Buda.com.</div>
+      <div class="sim-card">
+        <div class="sim-title">Parámetros del negocio</div>
+        <div class="sim-grid">
+          <div class="fg"><label>Ticket promedio (origen)</label><input class="fi" type="number" id="simTicket" placeholder="5.000.000" oninput="calcSim()"></div>
+          <div class="fg"><label>Operaciones por día</label><input class="fi" type="number" id="simOpsDay" placeholder="10" oninput="calcSim()"></div>
+          <div class="fg"><label>Días operativos al mes</label><input class="fi" type="number" id="simDaysMonth" placeholder="22" oninput="calcSim()"></div>
+          <div class="fg"><label>Tu margen (%)</label><input class="fi" type="number" id="simMargen" placeholder="1.5" step="0.1" oninput="calcSim()"></div>
         </div>
-        <div class="step">
-          <div class="step-num">2</div>
-          <div class="step-title">Conversión instantánea</div>
-          <div class="step-text">Buda convierte los fondos a USDT/USDC al tipo de cambio pactado, usando su reserva de liquidez.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">3</div>
-          <div class="step-title">Liquidación en destino</div>
-          <div class="step-text">Los fondos se convierten a la moneda destino y se acreditan en la cuenta del beneficiario.</div>
-        </div>
-        <div class="step">
-          <div class="step-num">4</div>
-          <div class="step-title">Confirmación inmediata</div>
-          <div class="step-text">Ambas partes reciben confirmación en tiempo real. Todo el proceso toma minutos, no días hábiles.</div>
-        </div>
+        <input type="hidden" id="simMonto" value="0">
+        <input type="hidden" id="simNumOps" value="0">
+        <div class="fg"><label>Notas</label><input class="fi" type="text" id="simNotas" placeholder="Ej: remesas sector salud Colombia-Chile"></div>
       </div>
-
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">¿Por qué es mejor que una transferencia bancaria?</div>
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-icon">⚡</div>
-          <div class="info-card-title">Velocidad</div>
-          <div class="info-card-text">Minutos vs 2-5 días hábiles de una transferencia SWIFT internacional. Disponibilidad 24/7 los 365 días.</div>
+      <div id="simResult">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div>Completa los parámetros para ver la proyección</div>
         </div>
-        <div class="info-card">
-          <div class="info-icon">💰</div>
-          <div class="info-card-title">Costo</div>
-          <div class="info-card-text">Sin comisiones bancarias intermedias. El único costo es el spread sobre la tasa de cambio, que tú defines.</div>
-        </div>
-        <div class="info-card">
-          <div class="info-icon">🔍</div>
-          <div class="info-card-title">Transparencia</div>
-          <div class="info-card-text">Tasa de referencia de mercado visible en todo momento. Sin costos ocultos ni tipos de cambio inflados.</div>
-        </div>
-      </div>
-
-      <div style="font-size:16px;font-weight:600;margin-bottom:14px">Corredores disponibles</div>
-      <div class="corr">
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇨🇱</div><div class="corr-name">Colombia ↔ Chile</div><div class="corr-text">COP/CLP · Ideal para pagos empresariales, nómina y comercio bilateral.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇵🇪</div><div class="corr-name">Colombia ↔ Perú</div><div class="corr-text">COP/PEN · Cadenas de suministro, proveedores y remesas.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇴🇧🇴</div><div class="corr-name">Colombia ↔ Bolivia</div><div class="corr-text">COP/BOB · Comercio minorista y pagos de servicios.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇺🇸🇨🇴</div><div class="corr-name">USD ↔ Colombia</div><div class="corr-text">USD/COP · Exportaciones, inversiones y remesas de alto volumen.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇺🇸🇻🇪</div><div class="corr-name">USD ↔ Venezuela</div><div class="corr-text">USD/VES · Remesas familiares y pagos comerciales.</div></div>
-        <div class="corr-card"><div class="corr-flag">🇨🇱🇵🇪</div><div class="corr-name">Chile ↔ Perú</div><div class="corr-text">CLP/PEN · Cadena de valor minera y agroindustrial.</div></div>
-      </div>
-
-      <div class="card" style="background:var(--teal);border:none;margin-top:24px;text-align:center;padding:32px">
-        <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:8px">¿Listo para comenzar?</div>
-        <div style="font-size:13px;color:rgba(255,255,255,.8);margin-bottom:20px">Agenda una llamada con nuestro equipo OTC y obtén una cotización personalizada.</div>
-        <a href="mailto:otc@buda.com" style="display:inline-block;padding:12px 28px;background:#fff;color:var(--teal);border-radius:10px;font-weight:600;font-size:13px;text-decoration:none">Contactar equipo OTC →</a>
       </div>
     </div>
+  </div>
 
+  <!-- HISTORY VIEW -->
+  <div style="display:none;height:calc(100vh - 56px);overflow-y:auto;padding:24px" id="view-hist">
+    <div style="font-size:20px;font-weight:700;margin-bottom:16px">Mis simulaciones</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Par</th>
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Tasa ref.</th>
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Margen</th>
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Volumen/mes</th>
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Ganancia proy.</th>
+            <th style="text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;font-weight:500">Fecha</th>
+          </tr></thead>
+          <tbody id="histBody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-const BASE = window.location.origin;
-let TOKEN = localStorage.getItem('budaToken');
-let USER  = JSON.parse(localStorage.getItem('budaUser')||'null');
-let fxData = {};
-let simOrig = 'USD', simDest = 'COP';
+var BASE = window.location.origin;
+var TOKEN = localStorage.getItem('budaToken');
+var USER  = JSON.parse(localStorage.getItem('budaUser')||'null');
+var fxData = {};
+var simOrig = 'COP', simDest = 'CLP';
+var chatHistory = [];
+var isTyping = false;
 
-const CURRENCIES = {
-  USD: { flag:'🇺🇸', name:'Dólar USD',       symbol:'$'   },
-  COP: { flag:'🇨🇴', name:'Peso Colombiano',  symbol:'$'   },
-  CLP: { flag:'🇨🇱', name:'Peso Chileno',     symbol:'$'   },
-  PEN: { flag:'🇵🇪', name:'Sol Peruano',      symbol:'S/'  },
-  BOB: { flag:'🇧🇴', name:'Boliviano',        symbol:'Bs.' },
-  VES: { flag:'🇻🇪', name:'Bolívar',          symbol:'Bs.' },
+var CURRENCIES = {
+  COP:{flag:'🇨🇴',name:'Peso Colombiano',symbol:'$'},
+  CLP:{flag:'🇨🇱',name:'Peso Chileno',symbol:'$'},
+  PEN:{flag:'🇵🇪',name:'Sol Peruano',symbol:'S/'},
+  BOB:{flag:'🇧🇴',name:'Boliviano',symbol:'Bs.'},
+  VES:{flag:'🇻🇪',name:'Bolívar',symbol:'Bs.'},
+  CNY:{flag:'🇨🇳',name:'Yuan Chino',symbol:'¥'},
+  USD:{flag:'🇺🇸',name:'Dólar USD',symbol:'$'},
 };
+var ACTIVE = ['COP','CLP','PEN','BOB','VES','CNY'];
 
-const fmt = function(n, dec) {
+var SUGGESTIONS = [
+  '¿Cuánto es 50 millones de COP en CLP hoy?',
+  'Simula 20 ops/día de 10.000 USD con margen 1.5%',
+  '¿Cuáles son los corredores activos?',
+  'Explica cómo funciona la integración API',
+  '¿Cuánto ganaría al año con 100 ops diarias?',
+];
+
+var fmt = function(n, dec) {
   if (!n && n !== 0) return '—';
   dec = dec !== undefined ? dec : 2;
   return parseFloat(n).toLocaleString('es-CO', {minimumFractionDigits:dec, maximumFractionDigits:dec});
@@ -719,7 +678,7 @@ async function api(m, u, b) {
 async function login() {
   var email = document.getElementById('lEmail').value.trim();
   var pass  = document.getElementById('lPass').value;
-  var d = await api('POST','/auth/login',{email:email, password:pass});
+  var d = await api('POST','/auth/login',{email,password:pass});
   if (d.error) { document.getElementById('lErr').textContent = d.error; return; }
   TOKEN = d.token; USER = d.user;
   localStorage.setItem('budaToken', TOKEN);
@@ -737,75 +696,211 @@ function logout() {
 function showApp() {
   document.getElementById('loginWrap').style.display='none';
   document.getElementById('appWrap').style.display='block';
-  document.getElementById('userName').textContent = USER && USER.nombre ? USER.nombre : '';
-  var av = USER && USER.nombre ? USER.nombre.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase() : 'B';
-  document.getElementById('userAv').textContent = av;
+  if (USER) {
+    document.getElementById('userName').textContent = USER.nombre;
+    var av = USER.nombre.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    document.getElementById('userAv').textContent = av;
+  }
   buildCurrencySelectors();
   loadRates();
   setInterval(loadRates, 3600000);
+  showWelcome();
+  renderSuggestions();
 }
 
+function switchView(v) {
+  ['chat','sim','hist'].forEach(function(x){
+    document.getElementById('view-'+x).style.display = x===v ? (x==='chat'?'flex':'block') : 'none';
+    var tab = document.getElementById('ntab-'+x);
+    if (tab) tab.classList.toggle('active', x===v);
+  });
+  if (v==='sim') { buildCurrencySelectors(); calcSim(); }
+}
+
+// ── Rates ──────────────────────────────────────────────────────
 async function loadRates() {
   var d = await api('GET','/api/rates');
   if (!d.rates) return;
   fxData = d;
-  var dot = document.getElementById('ratesDot');
-  var src = document.getElementById('ratesSource');
-  dot.style.background = d.source==='api' ? 'var(--teal)' : '#F59E0B';
-  src.textContent = d.source==='api' ? 'API en tiempo real' : 'Tasas manuales';
-  document.getElementById('ratesUpdated').textContent = 'Actualizado: ' + new Date(d.updatedAt).toLocaleString('es-CO');
-  renderTicker(d.rates);
-  renderRatesGrid(d.rates);
+  document.getElementById('ratesSource').textContent = d.source==='api' ? 'Tiempo real' : 'Tasas ref.';
+  var t = new Date(d.updatedAt);
+  var el = document.getElementById('ratesTime');
+  if (el) el.textContent = 'Act. ' + t.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+  renderCorridorRates(d.rates);
   calcSim();
 }
 
-function renderTicker(rates) {
-  var pairs = [['USD','COP'],['USD','CLP'],['USD','PEN'],['USD','BOB'],['USD','VES'],['COP','CLP'],['COP','PEN']];
-  document.getElementById('ticker').innerHTML = pairs.map(function(p) {
+function renderCorridorRates(rates) {
+  var corridors = [['COP','CLP'],['COP','PEN'],['COP','BOB'],['COP','VES'],['COP','CNY'],['USD','COP']];
+  var el = document.getElementById('corridorRates');
+  if (!el) return;
+  el.innerHTML = corridors.map(function(p) {
     var r = (rates[p[1]]||1) / (rates[p[0]]||1);
-    return '<div class="ticker-item">' +
-      '<div class="ticker-par">'+CURRENCIES[p[0]].flag+' '+p[0]+' / '+CURRENCIES[p[1]].flag+' '+p[1]+'</div>' +
-      '<div class="ticker-rate">'+fmt(r, r < 10 ? 4 : 2)+'</div>' +
-      '<div class="ticker-src">'+CURRENCIES[p[1]].name+'</div>' +
-      '</div>';
-  }).join('');
-}
-
-function renderRatesGrid(rates) {
-  var currs = Object.keys(CURRENCIES).filter(function(c){return c!=='USD';});
-  document.getElementById('ratesGrid').innerHTML = currs.map(function(c) {
-    var r = rates[c] || 0;
-    var info = CURRENCIES[c];
-    return '<div class="card">' +
-      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">' +
-        '<span style="font-size:24px">'+info.flag+'</span>' +
-        '<div><div style="font-size:13px;font-weight:600">'+info.name+'</div><div style="font-size:10px;color:var(--gray)">'+c+'</div></div>' +
+    var dec = r < 10 ? 4 : 2;
+    return '<div class="corridor">' +
+      '<span class="corridor-name">' + (CURRENCIES[p[0]]?CURRENCIES[p[0]].flag:'') + ' ' + p[0] + ' → ' + (CURRENCIES[p[1]]?CURRENCIES[p[1]].flag:'') + ' ' + p[1] + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<span class="corridor-rate">' + fmt(r,dec) + '</span>' +
+        '<span class="corridor-badge">Activo</span>' +
       '</div>' +
-      '<div style="font-size:24px;font-weight:700;font-family:monospace;color:var(--teal)">'+info.symbol+' '+fmt(r, r < 10 ? 4 : 2)+'</div>' +
-      '<div style="font-size:11px;color:var(--gray);margin-top:4px">por 1 USD</div>' +
-      '</div>';
+    '</div>';
   }).join('');
 }
 
+// ── Currency selectors ─────────────────────────────────────────
 function buildCurrencySelectors() {
-  var keys = Object.keys(CURRENCIES);
-  document.getElementById('origSelect').innerHTML = keys.map(function(c) {
+  var keys = ACTIVE.concat(['USD']);
+  var origEl = document.getElementById('origSelect');
+  var destEl = document.getElementById('destSelect');
+  if (origEl) origEl.innerHTML = keys.map(function(c){
     return '<button class="curr-btn'+(c===simOrig?' active':'')+'" onclick="setOrig(&quot;'+c+'&quot;)">'+CURRENCIES[c].flag+' '+c+'</button>';
   }).join('');
-  document.getElementById('destSelect').innerHTML = keys.map(function(c) {
+  if (destEl) destEl.innerHTML = keys.map(function(c){
     return '<button class="curr-btn'+(c===simDest?' active':'')+'" onclick="setDest(&quot;'+c+'&quot;)">'+CURRENCIES[c].flag+' '+c+'</button>';
   }).join('');
 }
+function setOrig(c){simOrig=c;buildCurrencySelectors();calcSim();}
+function setDest(c){simDest=c;buildCurrencySelectors();calcSim();}
 
-function setOrig(c) { simOrig=c; buildCurrencySelectors(); calcSim(); }
-function setDest(c) { simDest=c; buildCurrencySelectors(); calcSim(); }
+// ── Chat ───────────────────────────────────────────────────────
+function showWelcome() {
+  var name = USER ? USER.nombre.split(' ')[0] : 'bienvenido';
+  addBotMsg('Hola, **' + name + '** 👋
 
+Soy el asistente de **Buda Cross-Border Payments**. Puedo ayudarte a:
+
+- **Consultar tasas** de cambio en tiempo real entre nuestros corredores
+- **Simular tu modelo de negocio** — cuánto volumen y margen puedes generar
+- **Responder preguntas** sobre el servicio, la API y los corredores activos
+
+¿En qué puedo ayudarte hoy?');
+}
+
+function renderSuggestions() {
+  var el = document.getElementById('suggestions');
+  if (!el) return;
+  el.innerHTML = SUGGESTIONS.map(function(s){
+    return '<button class="sug" onclick="useSuggestion(&quot;'+s.replace(/"/g,'&quot;')+'&quot;)">'+s+'</button>';
+  }).join('');
+}
+
+function useSuggestion(s) {
+  document.getElementById('chatInput').value = s;
+  sendMsg();
+}
+
+function clearChat() {
+  chatHistory = [];
+  document.getElementById('chatMessages').innerHTML = '';
+  showWelcome();
+  renderSuggestions();
+}
+
+function addBotMsg(text) {
+  var el = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  div.className = 'msg bot';
+  div.innerHTML = '<div class="msg-avatar">B</div><div class="msg-bubble">'+mdToHtml(text)+'</div>';
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  // Hide suggestions after first response
+  if (chatHistory.length > 0) {
+    var sug = document.getElementById('suggestions');
+    if (sug) sug.style.display = 'none';
+  }
+}
+
+function addUserMsg(text) {
+  var el = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = '<div class="msg-avatar">'+((USER&&USER.nombre)?USER.nombre[0].toUpperCase():'U')+'</div><div class="msg-bubble">'+escHtml(text)+'</div>';
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function showTyping() {
+  var el = document.getElementById('chatMessages');
+  var div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typingIndicator';
+  div.innerHTML = '<div class="msg-avatar">B</div><div class="typing"><span></span><span></span><span></span></div>';
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function hideTyping() {
+  var el = document.getElementById('typingIndicator');
+  if (el) el.remove();
+}
+
+async function sendMsg() {
+  if (isTyping) return;
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  addUserMsg(text);
+
+  chatHistory.push({role:'user', content: text});
+  isTyping = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  // Hide suggestions
+  var sug = document.getElementById('suggestions');
+  if (sug) sug.style.display = 'none';
+
+  showTyping();
+
+  try {
+    var d = await api('POST','/api/chat', {messages: chatHistory});
+    hideTyping();
+    if (d.error) {
+      addBotMsg('Lo siento, ocurrió un error: ' + d.error);
+    } else {
+      chatHistory.push({role:'assistant', content: d.response});
+      addBotMsg(d.response);
+    }
+  } catch(e) {
+    hideTyping();
+    addBotMsg('Error de conexión. Por favor intenta de nuevo.');
+  }
+
+  isTyping = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+// Simple markdown to HTML
+function mdToHtml(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/\`(.+?)\`/g,'<code>$1</code>')
+    .replace(/
+
+/g,'</p><p>')
+    .replace(/
+/g,'<br>')
+    .replace(/^/,'<p>').replace(/$/,'</p>')
+    .replace(/<p><\/p>/g,'')
+    .replace(/- (.+?)(<br>|<\/p>)/g,'• $1$2');
+}
+
+function escHtml(text) {
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
+/g,'<br>');
+}
+
+// ── Simulator ──────────────────────────────────────────────────
 function calcSim() {
   if (!fxData.rates) return;
-  var ticket    = parseFloat(document.getElementById('simTicket').value)    || 0;
-  var opsDay    = parseFloat(document.getElementById('simOpsDay').value)    || 0;
-  var daysMonth = parseFloat(document.getElementById('simDaysMonth').value) || 22;
-  var margen    = parseFloat(document.getElementById('simMargen').value)    || 0;
+  var ticket    = parseFloat(document.getElementById('simTicket') && document.getElementById('simTicket').value)    || 0;
+  var opsDay    = parseFloat(document.getElementById('simOpsDay') && document.getElementById('simOpsDay').value)    || 0;
+  var daysMonth = parseFloat(document.getElementById('simDaysMonth') && document.getElementById('simDaysMonth').value) || 22;
+  var margen    = parseFloat(document.getElementById('simMargen') && document.getElementById('simMargen').value)    || 0;
 
   var rOrig   = fxData.rates[simOrig] || 1;
   var rDest   = fxData.rates[simDest] || 1;
@@ -815,130 +910,81 @@ function calcSim() {
   var currO   = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
   var currD   = CURRENCIES[simDest] ? CURRENCIES[simDest].symbol : '$';
 
-  // Update hidden fields
-  if (document.getElementById('simMonto'))   document.getElementById('simMonto').value  = ticket;
-  if (document.getElementById('simNumOps'))  document.getElementById('simNumOps').value = Math.round(opsDay * daysMonth);
-
-  // Show tasa banner
-  var cotResult = document.getElementById('cotResult');
-  if (cotResult && tasaRef > 0) {
-    cotResult.style.display = 'block';
-    document.getElementById('crTasaRef').textContent = fmt(tasaRef, dec);
-    document.getElementById('crTasaCli').textContent = fmt(tasaCli, dec) + (margen ? '  (+'+margen+'%)' : '');
-    if (document.getElementById('crLabel')) document.getElementById('crLabel').textContent = '1 '+simOrig+' = '+currD+' '+fmt(tasaCli,dec)+' '+simDest;
+  var banner = document.getElementById('tasaBanner');
+  if (banner) {
+    banner.style.display = 'block';
+    banner.textContent = '1 '+simOrig+' = '+currD+' '+fmt(tasaRef,dec)+' (ref.) | Tu tasa: '+currD+' '+fmt(tasaCli,dec)+' (+'+margen+'%)';
   }
 
   if (!ticket || !opsDay || !margen) {
     document.getElementById('simResult').innerHTML =
-      '<div style="background:var(--bg3);border-radius:16px;padding:28px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px">Completa los parámetros para ver la proyección de ingresos</div></div>';
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📊</div><div>Completa los parámetros para ver la proyección</div></div>';
     return;
   }
 
-  var opsMonth    = Math.round(opsDay * daysMonth);
-  var volMonth    = ticket * opsMonth;
-  var volMonthD   = volMonth * tasaCli;
-  var margMonth   = volMonth * (margen / 100);
-  var margMonthD  = margMonth * tasaCli;
-  var margYear    = margMonth * 12;
-  var margYearD   = margMonthD * 12;
+  var opsMonth  = Math.round(opsDay * daysMonth);
+  var volMonth  = ticket * opsMonth;
+  var volMonthD = volMonth * tasaCli;
+  var margMonth = volMonth * (margen / 100);
+  var margMonthD= margMonth * tasaCli;
+  var margYear  = margMonth * 12;
+  var margYearD = margMonthD * 12;
   var flagO = CURRENCIES[simOrig] ? CURRENCIES[simOrig].flag : '';
   var flagD = CURRENCIES[simDest] ? CURRENCIES[simDest].flag : '';
 
   document.getElementById('simResult').innerHTML =
-    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">' +
-      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Ops / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:monospace">'+opsMonth.toLocaleString('es-CO')+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+opsDay+' ops x '+daysMonth+' dias</div>' +
-      '</div>' +
-      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Volumen / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:monospace">'+currO+' '+fmt(volMonth)+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(volMonthD)+'</div>' +
-      '</div>' +
-      '<div style="background:var(--blue-l);border:1.5px solid var(--blue-border);border-radius:12px;padding:16px;text-align:center">' +
-        '<div style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tu margen / mes</div>' +
-        '<div style="font-size:26px;font-weight:800;font-family:monospace;color:var(--blue)">'+currO+' '+fmt(margMonth)+'</div>' +
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(margMonthD)+'</div>' +
-      '</div>' +
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kpi-val">'+opsMonth.toLocaleString('es-CO')+'</div><div class="kpi-lbl">Ops / mes</div></div>' +
+      '<div class="kpi"><div class="kpi-val">'+currO+' '+fmt(volMonth)+'</div><div class="kpi-lbl">Volumen / mes</div></div>' +
+      '<div class="kpi blue"><div class="kpi-val">'+currO+' '+fmt(margMonth)+'</div><div class="kpi-lbl">Tu margen / mes</div></div>' +
     '</div>' +
-    '<div style="background:var(--text);border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">' +
-      '<div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyeccion anual</div>' +
-        '<div style="font-size:28px;font-weight:800;color:#fff;font-family:monospace">'+currO+' '+fmt(margYear)+'</div>' +
-        '<div style="font-size:11px;color:rgba(255,255,255,.4)">'+currD+' '+fmt(margYearD)+' a '+margen+'% de margen</div>' +
-      '</div>' +
-      '<div style="text-align:right">' +
-        '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor</div>' +
-        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">'+flagO+' '+simOrig+' → '+flagD+' '+simDest+'</div>' +
-      '</div>' +
+    '<div class="annual-banner">' +
+      '<div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyección anual</div>' +
+        '<div style="font-size:26px;font-weight:800;color:#fff;font-family:monospace">'+currO+' '+fmt(margYear)+'</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.4)">'+currD+' '+fmt(margYearD)+' a '+margen+'% de margen</div></div>' +
+      '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor</div>' +
+        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">'+flagO+' '+simOrig+' → '+flagD+' '+simDest+'</div></div>' +
     '</div>' +
-    '<div style="background:var(--bg3);border-radius:10px;padding:14px;font-size:11px;color:var(--gray);font-family:monospace;line-height:2;margin-bottom:14px">' +
+    '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:11px;color:var(--gray);font-family:monospace;line-height:2;margin-bottom:12px">' +
       'Tasa ref: '+fmt(tasaRef,dec)+' | Tu tasa: '+fmt(tasaCli,dec)+' | Ticket: '+currO+' '+fmt(ticket)+' | '+opsDay+' ops/dia x '+daysMonth+' dias = '+opsMonth+' ops/mes' +
     '</div>' +
-    '<button class="btn-save" onclick="guardarSim()">💾 Guardar esta simulacion</button>';
+    '<button class="btn-save" onclick="guardarSim()">💾 Guardar simulación</button>';
 }
 
 async function guardarSim() {
-  var margen  = parseFloat(document.getElementById('simMargen').value) || 0;
-  var ticket  = parseFloat(document.getElementById('simTicket').value) || 0;
-  var numOps  = parseInt(document.getElementById('simNumOps').value)   || 0;
-  var notas   = document.getElementById('simNotas').value;
-  if (!ticket || !numOps) { floatAlert('Completa ticket y número de operaciones','','red'); return; }
-  var d = await api('POST','/api/simular', {
-    moneda_origen: simOrig, moneda_destino: simDest,
-    margen_pct: margen, ticket_promedio: ticket,
-    num_operaciones: numOps, notas: notas
-  });
+  var ticket    = parseFloat(document.getElementById('simTicket').value)    || 0;
+  var opsDay    = parseFloat(document.getElementById('simOpsDay').value)    || 0;
+  var daysMonth = parseFloat(document.getElementById('simDaysMonth').value) || 22;
+  var margen    = parseFloat(document.getElementById('simMargen').value)    || 0;
+  var notas     = document.getElementById('simNotas').value;
+  if (!ticket || !opsDay || !margen) { floatAlert('Completa todos los campos','','red'); return; }
+  var numOps = Math.round(opsDay * daysMonth);
+  var d = await api('POST','/api/simular',{moneda_origen:simOrig,moneda_destino:simDest,margen_pct:margen,ticket_promedio:ticket,num_operaciones:numOps,notas:'ops/dia:'+opsDay+' dias:'+daysMonth+' '+notas});
   if (d.error) { floatAlert('Error', d.error, 'red'); return; }
-  floatAlert('Simulación guardada', 'Ganancia proyectada: ' + CURRENCIES[simOrig].symbol + ' ' + fmt(d.ganancia_proyectada), 'teal');
+  var currO = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
+  floatAlert('Simulación guardada', 'Margen mensual: '+currO+' '+fmt(d.ganancia_proyectada), 'blue');
 }
 
+// ── History ────────────────────────────────────────────────────
 async function loadHist() {
   var d = await api('GET','/api/mis-simulaciones');
   var rows = d.simulaciones || [];
-  document.getElementById('histBody').innerHTML = rows.length ? rows.map(function(r) {
-    return '<tr>' +
-      '<td><span class="badge b-teal">'+r.par+'</span></td>' +
-      '<td style="font-family:monospace">'+fmt(r.tasa_referencia,4)+'</td>' +
-      '<td style="font-family:monospace;color:var(--teal)">'+fmt(r.tasa_cliente,4)+'</td>' +
-      '<td>'+fmt(r.margen_pct,2)+'%</td>' +
-      '<td style="font-family:monospace">'+fmt(r.volumen_total)+'</td>' +
-      '<td style="font-family:monospace;color:var(--green);font-weight:600">'+fmt(r.ganancia_proyectada)+'</td>' +
-      '<td style="font-size:10px;color:var(--gray)">'+new Date(r.created_at).toLocaleString('es-CO',{day:'2-digit',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'})+'</td>' +
-      '</tr>';
-  }).join('') : '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray)">No tienes simulaciones guardadas aún</td></tr>';
+  document.getElementById('histBody').innerHTML = rows.length ? rows.map(function(r){
+    return '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:10px 14px"><span style="background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;font-family:monospace">'+r.par+'</span></td>' +
+      '<td style="padding:10px 14px;font-family:monospace;font-size:12px">'+fmt(r.tasa_referencia,4)+'</td>' +
+      '<td style="padding:10px 14px;font-size:12px">'+fmt(r.margen_pct,2)+'%</td>' +
+      '<td style="padding:10px 14px;font-family:monospace;font-size:12px">'+fmt(r.volumen_total)+'</td>' +
+      '<td style="padding:10px 14px;font-family:monospace;font-size:12px;color:var(--green);font-weight:600">'+fmt(r.ganancia_proyectada)+'</td>' +
+      '<td style="padding:10px 14px;font-size:11px;color:var(--gray)">'+new Date(r.created_at).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+'</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray)">No tienes simulaciones guardadas aún</td></tr>';
 }
 
-async function saveTasa() {
-  var par  = document.getElementById('manPar').value;
-  var tasa = document.getElementById('manTasa').value;
-  var msg  = document.getElementById('tasaMsg');
-  if (!tasa) return;
-  var d = await api('POST','/api/tasa-manual',{par:par, tasa:tasa});
-  msg.style.display = 'block';
-  if (d.ok) {
-    msg.textContent = 'Tasa guardada: '+par+' = '+tasa;
-    msg.style.color = 'var(--teal)';
-    loadRates();
-  } else {
-    msg.textContent = d.error || 'Error';
-    msg.style.color = 'var(--red)';
-  }
-}
-
-function showPage(p) {
-  document.querySelectorAll('.page').forEach(function(el){el.classList.remove('active');});
-  document.querySelectorAll('.nav-tab').forEach(function(el){el.classList.remove('active');});
-  document.getElementById('page-'+p).classList.add('active');
-  event && event.target && event.target.classList.add('active');
-  if (p==='hist') loadHist();
-  if (p==='rates') loadRates();
-}
-
+// ── Float alert ────────────────────────────────────────────────
 function floatAlert(title, body, type) {
-  var colors = {teal:['var(--teal-l)','var(--teal)','✅'], red:['var(--red-l)','var(--red)','❌'], orange:['var(--orange-l)','var(--orange)','⚠️']};
-  var c = colors[type]||colors.teal;
+  var colors = {blue:['var(--blue-l)','var(--blue)','✅'], red:['var(--red-l)','var(--red)','❌']};
+  var c = colors[type]||colors.blue;
   var el = document.createElement('div');
   el.className = 'float-alert';
   el.style.background = c[0]; el.style.border = '1px solid '+c[1]+'40';
@@ -947,7 +993,7 @@ function floatAlert(title, body, type) {
   setTimeout(function(){if(el.parentNode){el.style.opacity='0';el.style.transition='.3s';setTimeout(function(){el.remove();},300);}},5000);
 }
 
-// Init
+// ── Init ───────────────────────────────────────────────────────
 if (TOKEN) {
   USER = JSON.parse(localStorage.getItem('budaUser')||'null');
   showApp();
