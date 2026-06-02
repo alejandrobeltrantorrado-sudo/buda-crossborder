@@ -643,22 +643,22 @@ var chatHistory = [];
 var isTyping = false;
 
 var CURRENCIES = {
-  COP:{flag:'🇨🇴',name:'Peso Colombiano',symbol:'$'},
-  CLP:{flag:'🇨🇱',name:'Peso Chileno',symbol:'$'},
-  PEN:{flag:'🇵🇪',name:'Sol Peruano',symbol:'S/'},
-  BOB:{flag:'🇧🇴',name:'Boliviano',symbol:'Bs.'},
-  VES:{flag:'🇻🇪',name:'Bolívar',symbol:'Bs.'},
-  CNY:{flag:'🇨🇳',name:'Yuan Chino',symbol:'¥'},
-  USD:{flag:'🇺🇸',name:'Dólar USD',symbol:'$'},
+  COP:{flag:'\ud83c\udde8\ud83c\uddf4',name:'Peso Colombiano',symbol:'$'},
+  CLP:{flag:'\ud83c\udde8\ud83c\uddf1',name:'Peso Chileno',symbol:'$'},
+  PEN:{flag:'\ud83c\uddf5\ud83c\uddea',name:'Sol Peruano',symbol:'S/'},
+  BOB:{flag:'\ud83c\udde7\ud83c\uddf4',name:'Boliviano',symbol:'Bs.'},
+  VES:{flag:'\ud83c\uddfb\ud83c\uddea',name:'Bol\u00edvar',symbol:'Bs.'},
+  CNY:{flag:'\ud83c\udde8\ud83c\uddf3',name:'Yuan Chino',symbol:'\u00a5'},
+  USD:{flag:'\ud83c\uddfa\ud83c\uddf8',name:'D\u00f3lar USD',symbol:'$'},
 };
 var ACTIVE = ['COP','CLP','PEN','BOB','VES','CNY'];
 
 var SUGGESTIONS = [
-  '¿Cuánto es 50 millones de COP en CLP hoy?',
-  'Simula 20 ops/día de 10.000 USD con margen 1.5%',
-  '¿Cuáles son los corredores activos?',
-  'Explica cómo funciona la integración API',
-  '¿Cuánto ganaría al año con 100 ops diarias?',
+  '\u00bfCu\u00e1nto es 50 millones de COP en CLP hoy?',
+  'Simula 20 ops/d\u00eda de 10.000 USD con margen 1.5%',
+  '\u00bfCu\u00e1les son los corredores activos?',
+  'Explica c\u00f3mo funciona la integraci\u00f3n API',
+  '\u00bfCu\u00e1nto ganar\u00eda al a\u00f1o con 100 ops diarias?',
 ];
 
 var fmt = function(n, dec) {
@@ -717,7 +717,7 @@ function switchView(v) {
   if (v==='sim') { buildCurrencySelectors(); calcSim(); }
 }
 
-// ── Rates ──────────────────────────────────────────────────────
+// Rates
 async function loadRates() {
   var d = await api('GET','/api/rates');
   if (!d.rates) return;
@@ -738,7 +738,7 @@ function renderCorridorRates(rates) {
     var r = (rates[p[1]]||1) / (rates[p[0]]||1);
     var dec = r < 10 ? 4 : 2;
     return '<div class="corridor">' +
-      '<span class="corridor-name">' + (CURRENCIES[p[0]]?CURRENCIES[p[0]].flag:'') + ' ' + p[0] + ' → ' + (CURRENCIES[p[1]]?CURRENCIES[p[1]].flag:'') + ' ' + p[1] + '</span>' +
+      '<span class="corridor-name">' + (CURRENCIES[p[0]]?CURRENCIES[p[0]].flag:'') + ' ' + p[0] + ' \u2192 ' + (CURRENCIES[p[1]]?CURRENCIES[p[1]].flag:'') + ' ' + p[1] + '</span>' +
       '<div style="display:flex;align-items:center;gap:8px">' +
         '<span class="corridor-rate">' + fmt(r,dec) + '</span>' +
         '<span class="corridor-badge">Activo</span>' +
@@ -747,7 +747,7 @@ function renderCorridorRates(rates) {
   }).join('');
 }
 
-// ── Currency selectors ─────────────────────────────────────────
+// Currency selectors
 function buildCurrencySelectors() {
   var keys = ACTIVE.concat(['USD']);
   var origEl = document.getElementById('origSelect');
@@ -762,15 +762,15 @@ function buildCurrencySelectors() {
 function setOrig(c){simOrig=c;buildCurrencySelectors();calcSim();}
 function setDest(c){simDest=c;buildCurrencySelectors();calcSim();}
 
-// ── Chat ───────────────────────────────────────────────────────
+// Chat
 function showWelcome() {
   var name = USER ? USER.nombre.split(' ')[0] : 'bienvenido';
-  var msg = 'Hola, **' + name + '** 👋\n\n' +
+  var msg = 'Hola, **' + name + '** \ud83d\udc4b\n\n' +
     'Soy el asistente de **Buda Cross-Border Payments**. Puedo ayudarte a:\n\n' +
     '- **Consultar tasas** de cambio en tiempo real entre nuestros corredores\n' +
     '- **Simular tu modelo de negocio** y proyectar tus ingresos\n' +
     '- **Responder preguntas** sobre el servicio, la API y los corredores activos\n\n' +
-    '¿En qué puedo ayudarte hoy?';
+    '\u00bfEn qu\u00e9 puedo ayudarte hoy?';
   addBotMsg(msg);
 }
 
@@ -855,14 +855,14 @@ async function sendMsg() {
     var d = await api('POST','/api/chat', {messages: chatHistory});
     hideTyping();
     if (d.error) {
-      addBotMsg('Lo siento, ocurrió un error: ' + d.error);
+      addBotMsg('Lo siento, ocurri\u00f3 un error: ' + d.error);
     } else {
       chatHistory.push({role:'assistant', content: d.response});
       addBotMsg(d.response);
     }
   } catch(e) {
     hideTyping();
-    addBotMsg('Error de conexión. Por favor intenta de nuevo.');
+    addBotMsg('Error de conexi\u00f3n. Por favor intenta de nuevo.');
   }
 
   isTyping = false;
@@ -887,7 +887,7 @@ function escHtml(text) {
   return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split(nl).join('<br>');
 }
 
-// ── Simulator ──────────────────────────────────────────────────
+// Simulator
 function calcSim() {
   if (!fxData.rates) return;
   var ticket    = parseFloat(document.getElementById('simTicket') && document.getElementById('simTicket').value)    || 0;
@@ -911,7 +911,7 @@ function calcSim() {
 
   if (!ticket || !opsDay || !margen) {
     document.getElementById('simResult').innerHTML =
-      '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📊</div><div>Completa los parámetros para ver la proyección</div></div>';
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">\ud83d\udcca</div><div>Completa los par\u00e1metros para ver la proyecci\u00f3n</div></div>';
     return;
   }
 
@@ -932,16 +932,16 @@ function calcSim() {
       '<div class="kpi blue"><div class="kpi-val">'+currO+' '+fmt(margMonth)+'</div><div class="kpi-lbl">Tu margen / mes</div></div>' +
     '</div>' +
     '<div class="annual-banner">' +
-      '<div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyección anual</div>' +
+      '<div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyecci\u00f3n anual</div>' +
         '<div style="font-size:26px;font-weight:800;color:#fff;font-family:monospace">'+currO+' '+fmt(margYear)+'</div>' +
         '<div style="font-size:11px;color:rgba(255,255,255,.4)">'+currD+' '+fmt(margYearD)+' a '+margen+'% de margen</div></div>' +
       '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor</div>' +
-        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">'+flagO+' '+simOrig+' → '+flagD+' '+simDest+'</div></div>' +
+        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">'+flagO+' '+simOrig+' \u2192 '+flagD+' '+simDest+'</div></div>' +
     '</div>' +
     '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:11px;color:var(--gray);font-family:monospace;line-height:2;margin-bottom:12px">' +
       'Tasa ref: '+fmt(tasaRef,dec)+' | Tu tasa: '+fmt(tasaCli,dec)+' | Ticket: '+currO+' '+fmt(ticket)+' | '+opsDay+' ops/dia x '+daysMonth+' dias = '+opsMonth+' ops/mes' +
     '</div>' +
-    '<button class="btn-save" onclick="guardarSim()">💾 Guardar simulación</button>';
+    '<button class="btn-save" onclick="guardarSim()">\ud83d\udcbe Guardar simulaci\u00f3n</button>';
 }
 
 async function guardarSim() {
@@ -955,10 +955,10 @@ async function guardarSim() {
   var d = await api('POST','/api/simular',{moneda_origen:simOrig,moneda_destino:simDest,margen_pct:margen,ticket_promedio:ticket,num_operaciones:numOps,notas:'ops/dia:'+opsDay+' dias:'+daysMonth+' '+notas});
   if (d.error) { floatAlert('Error', d.error, 'red'); return; }
   var currO = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
-  floatAlert('Simulación guardada', 'Margen mensual: '+currO+' '+fmt(d.ganancia_proyectada), 'blue');
+  floatAlert('Simulaci\u00f3n guardada', 'Margen mensual: '+currO+' '+fmt(d.ganancia_proyectada), 'blue');
 }
 
-// ── History ────────────────────────────────────────────────────
+// History
 async function loadHist() {
   var d = await api('GET','/api/mis-simulaciones');
   var rows = d.simulaciones || [];
@@ -971,22 +971,22 @@ async function loadHist() {
       '<td style="padding:10px 14px;font-family:monospace;font-size:12px;color:var(--green);font-weight:600">'+fmt(r.ganancia_proyectada)+'</td>' +
       '<td style="padding:10px 14px;font-size:11px;color:var(--gray)">'+new Date(r.created_at).toLocaleString('es-CO',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})+'</td>' +
     '</tr>';
-  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray)">No tienes simulaciones guardadas aún</td></tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray)">No tienes simulaciones guardadas a\u00fan</td></tr>';
 }
 
-// ── Float alert ────────────────────────────────────────────────
+// Float alert
 function floatAlert(title, body, type) {
-  var colors = {blue:['var(--blue-l)','var(--blue)','✅'], red:['var(--red-l)','var(--red)','❌']};
+  var colors = {blue:['var(--blue-l)','var(--blue)','\u2705'], red:['var(--red-l)','var(--red)','\u274c']};
   var c = colors[type]||colors.blue;
   var el = document.createElement('div');
   el.className = 'float-alert';
   el.style.background = c[0]; el.style.border = '1px solid '+c[1]+'40';
-  el.innerHTML = '<span style="font-size:18px">'+c[2]+'</span><div style="flex:1"><div style="font-size:12px;font-weight:500;color:'+c[1]+'">'+title+'</div>'+(body?'<div style="font-size:10px;color:#888;margin-top:2px">'+body+'</div>':'')+'</div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:16px">×</button>';
+  el.innerHTML = '<span style="font-size:18px">'+c[2]+'</span><div style="flex:1"><div style="font-size:12px;font-weight:500;color:'+c[1]+'">'+title+'</div>'+(body?'<div style="font-size:10px;color:#888;margin-top:2px">'+body+'</div>':'')+'</div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:16px">\u00d7</button>';
   document.body.appendChild(el);
   setTimeout(function(){if(el.parentNode){el.style.opacity='0';el.style.transition='.3s';setTimeout(function(){el.remove();},300);}},5000);
 }
 
-// ── Init ───────────────────────────────────────────────────────
+// Init
 if (TOKEN) {
   USER = JSON.parse(localStorage.getItem('budaUser')||'null');
   showApp();
