@@ -494,16 +494,26 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
             <label>Moneda destino</label>
             <div class="curr-select" id="destSelect"></div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
             <div class="fg">
-              <label>Monto a convertir</label>
-              <input class="fi" type="number" id="simMonto" placeholder="10.000" oninput="calcSim()">
+              <label>Ticket promedio</label>
+              <input class="fi" type="number" id="simTicket" placeholder="5.000.000" oninput="calcSim()">
+            </div>
+            <div class="fg">
+              <label>Ops por día</label>
+              <input class="fi" type="number" id="simOpsDay" placeholder="10" oninput="calcSim()">
+            </div>
+            <div class="fg">
+              <label>Días al mes</label>
+              <input class="fi" type="number" id="simDaysMonth" placeholder="22" oninput="calcSim()">
             </div>
             <div class="fg">
               <label>Tu margen (%)</label>
               <input class="fi" type="number" id="simMargen" placeholder="1.5" step="0.1" oninput="calcSim()">
             </div>
           </div>
+          <input type="hidden" id="simMonto" value="0">
+          <input type="hidden" id="simNumOps" value="0">
 
           <!-- Resultado cotización -->
           <div id="cotResult" style="display:none;background:var(--teal-l);border-radius:10px;padding:14px;margin-bottom:14px">
@@ -523,20 +533,9 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
           </div>
 
           <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
-            <div class="card-title">Simulador de volumen</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div class="fg">
-                <label>Ticket promedio</label>
-                <input class="fi" type="number" id="simTicket" placeholder="50.000" oninput="calcSim()">
-              </div>
-              <div class="fg">
-                <label>Nº de operaciones</label>
-                <input class="fi" type="number" id="simNumOps" placeholder="20" oninput="calcSim()">
-              </div>
-            </div>
             <div class="fg">
               <label>Notas (opcional)</label>
-              <input class="fi" type="text" id="simNotas" placeholder="Ej: operaciones mensuales sector salud">
+              <input class="fi" type="text" id="simNotas" placeholder="Ej: remesas sector salud Colombia-Chile">
             </div>
           </div>
         </div>
@@ -798,46 +797,81 @@ function setDest(c) { simDest=c; buildCurrencySelectors(); calcSim(); }
 
 function calcSim() {
   if (!fxData.rates) return;
-  var monto   = parseFloat(document.getElementById('simMonto').value) || 0;
-  var margen  = parseFloat(document.getElementById('simMargen').value) || 0;
-  var ticket  = parseFloat(document.getElementById('simTicket').value) || 0;
-  var numOps  = parseInt(document.getElementById('simNumOps').value)   || 0;
+  var ticket    = parseFloat(document.getElementById('simTicket').value)    || 0;
+  var opsDay    = parseFloat(document.getElementById('simOpsDay').value)    || 0;
+  var daysMonth = parseFloat(document.getElementById('simDaysMonth').value) || 22;
+  var margen    = parseFloat(document.getElementById('simMargen').value)    || 0;
 
-  var rOrig = fxData.rates[simOrig] || 1;
-  var rDest = fxData.rates[simDest] || 1;
+  var rOrig   = fxData.rates[simOrig] || 1;
+  var rDest   = fxData.rates[simDest] || 1;
   var tasaRef = rDest / rOrig;
   var tasaCli = tasaRef * (1 + margen / 100);
+  var dec     = tasaRef < 10 ? 4 : 2;
+  var currO   = CURRENCIES[simOrig] ? CURRENCIES[simOrig].symbol : '$';
+  var currD   = CURRENCIES[simDest] ? CURRENCIES[simDest].symbol : '$';
 
-  // Cotización
-  if (monto > 0) {
-    var montoDest = monto * tasaCli;
-    document.getElementById('cotResult').style.display = 'block';
-    document.getElementById('crTasaRef').textContent = fmt(tasaRef, tasaRef < 10 ? 4 : 2);
-    document.getElementById('crTasaCli').textContent = fmt(tasaCli, tasaCli < 10 ? 4 : 2) + (margen ? ' (+'+margen+'%)' : '');
-    document.getElementById('crLabel').textContent   = 'Monto en '+simDest;
-    document.getElementById('crMontoDest').textContent = CURRENCIES[simDest].symbol + ' ' + fmt(montoDest);
+  // Update hidden fields
+  if (document.getElementById('simMonto'))   document.getElementById('simMonto').value  = ticket;
+  if (document.getElementById('simNumOps'))  document.getElementById('simNumOps').value = Math.round(opsDay * daysMonth);
+
+  // Show tasa banner
+  var cotResult = document.getElementById('cotResult');
+  if (cotResult && tasaRef > 0) {
+    cotResult.style.display = 'block';
+    document.getElementById('crTasaRef').textContent = fmt(tasaRef, dec);
+    document.getElementById('crTasaCli').textContent = fmt(tasaCli, dec) + (margen ? '  (+'+margen+'%)' : '');
+    if (document.getElementById('crLabel')) document.getElementById('crLabel').textContent = '1 '+simOrig+' = '+currD+' '+fmt(tasaCli,dec)+' '+simDest;
   }
 
-  // Simulación de volumen
-  if (ticket > 0 && numOps > 0) {
-    var volumen  = ticket * numOps;
-    var ganancia = volumen * (margen / 100);
-    var gananciaDestino = ganancia * tasaCli;
-
+  if (!ticket || !opsDay || !margen) {
     document.getElementById('simResult').innerHTML =
-      '<div class="sim-result">' +
-        '<div class="sim-row"><span class="sim-key">Par</span><span class="sim-val">'+simOrig+' → '+simDest+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Tasa de referencia</span><span class="sim-val">'+fmt(tasaRef, tasaRef<10?4:2)+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Tu tasa (margen '+margen+'%)</span><span class="sim-val" style="color:var(--teal)">'+fmt(tasaCli, tasaCli<10?4:2)+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Ticket promedio</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(ticket)+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Nº de operaciones</span><span class="sim-val">'+numOps.toLocaleString('es-CO')+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key">Volumen total</span><span class="sim-val">'+CURRENCIES[simOrig].symbol+' '+fmt(volumen)+'</span></div>' +
-        '<div class="sim-row"><span class="sim-key" style="font-size:13px;font-weight:600;color:var(--text)">Ganancia proyectada</span>' +
-          '<span class="sim-val highlight-val">'+CURRENCIES[simOrig].symbol+' '+fmt(ganancia)+' <span style="font-size:11px;color:var(--gray)">('+CURRENCIES[simDest].symbol+' '+fmt(gananciaDestino)+')</span></span>' +
-        '</div>' +
-      '</div>' +
-      '<button class="btn-save" onclick="guardarSim()">💾 Guardar simulación</button>';
+      '<div style="background:var(--bg3);border-radius:16px;padding:28px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">📊</div><div style="font-size:14px">Completa los parámetros para ver la proyección de ingresos</div></div>';
+    return;
   }
+
+  var opsMonth    = Math.round(opsDay * daysMonth);
+  var volMonth    = ticket * opsMonth;
+  var volMonthD   = volMonth * tasaCli;
+  var margMonth   = volMonth * (margen / 100);
+  var margMonthD  = margMonth * tasaCli;
+  var margYear    = margMonth * 12;
+  var margYearD   = margMonthD * 12;
+  var flagO = CURRENCIES[simOrig] ? CURRENCIES[simOrig].flag : '';
+  var flagD = CURRENCIES[simDest] ? CURRENCIES[simDest].flag : '';
+
+  document.getElementById('simResult').innerHTML =
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">' +
+      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Ops / mes</div>' +
+        '<div style="font-size:26px;font-weight:800;font-family:monospace">'+opsMonth.toLocaleString('es-CO')+'</div>' +
+        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+opsDay+' ops x '+daysMonth+' dias</div>' +
+      '</div>' +
+      '<div style="background:var(--bg3);border-radius:12px;padding:16px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Volumen / mes</div>' +
+        '<div style="font-size:26px;font-weight:800;font-family:monospace">'+currO+' '+fmt(volMonth)+'</div>' +
+        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(volMonthD)+'</div>' +
+      '</div>' +
+      '<div style="background:var(--blue-l);border:1.5px solid var(--blue-border);border-radius:12px;padding:16px;text-align:center">' +
+        '<div style="font-size:10px;color:var(--blue);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Tu margen / mes</div>' +
+        '<div style="font-size:26px;font-weight:800;font-family:monospace;color:var(--blue)">'+currO+' '+fmt(margMonth)+'</div>' +
+        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+currD+' '+fmt(margMonthD)+'</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:var(--text);border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">' +
+      '<div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyeccion anual</div>' +
+        '<div style="font-size:28px;font-weight:800;color:#fff;font-family:monospace">'+currO+' '+fmt(margYear)+'</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.4)">'+currD+' '+fmt(margYearD)+' a '+margen+'% de margen</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor</div>' +
+        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">'+flagO+' '+simOrig+' → '+flagD+' '+simDest+'</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:var(--bg3);border-radius:10px;padding:14px;font-size:11px;color:var(--gray);font-family:monospace;line-height:2;margin-bottom:14px">' +
+      'Tasa ref: '+fmt(tasaRef,dec)+' | Tu tasa: '+fmt(tasaCli,dec)+' | Ticket: '+currO+' '+fmt(ticket)+' | '+opsDay+' ops/dia x '+daysMonth+' dias = '+opsMonth+' ops/mes' +
+    '</div>' +
+    '<button class="btn-save" onclick="guardarSim()">💾 Guardar esta simulacion</button>';
 }
 
 async function guardarSim() {
