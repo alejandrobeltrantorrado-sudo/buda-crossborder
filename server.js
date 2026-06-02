@@ -662,7 +662,7 @@ var SUGGESTIONS = [
 ];
 
 var fmt = function(n, dec) {
-  if (!n && n !== 0) return '—';
+  if (!n && n !== 0) return '--';
   dec = dec !== undefined ? dec : 2;
   return parseFloat(n).toLocaleString('es-CO', {minimumFractionDigits:dec, maximumFractionDigits:dec});
 };
@@ -878,7 +878,7 @@ function mdToHtml(text) {
   var nl = String.fromCharCode(10);
   var parts = t.split(nl+nl);
   t = parts.map(function(p){ return '<p>'+p.split(nl).join('<br>')+'</p>'; }).join('');
-  t = t.replace(/[•-] ([^<]+)/g,'<li>$1</li>');
+  t = t.replace(/[\u2022-] ([^<]+)/g,'<li>$1</li>');
   return t;
 }
 
