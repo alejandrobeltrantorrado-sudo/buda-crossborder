@@ -872,24 +872,19 @@ async function sendMsg() {
 
 // Simple markdown to HTML
 function mdToHtml(text) {
-  return text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g,'<em>$1</em>')
-    .replace(/[\x60](.+?)[\x60]/g,'<code>$1</code>')
-    .replace(/
-
-/g,'</p><p>')
-    .replace(/
-/g,'<br>')
-    .replace(/^/,'<p>').replace(/$/,'</p>')
-    .replace(/<p><\/p>/g,'')
-    .replace(/- (.+?)(<br>|<\/p>)/g,'• $1$2');
+  var t = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  t = t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+  t = t.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  var nl = String.fromCharCode(10);
+  var parts = t.split(nl+nl);
+  t = parts.map(function(p){ return '<p>'+p.split(nl).join('<br>')+'</p>'; }).join('');
+  t = t.replace(/[•-] ([^<]+)/g,'<li>$1</li>');
+  return t;
 }
 
 function escHtml(text) {
-  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
-/g,'<br>');
+  var nl = String.fromCharCode(10);
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').split(nl).join('<br>');
 }
 
 // ── Simulator ──────────────────────────────────────────────────
