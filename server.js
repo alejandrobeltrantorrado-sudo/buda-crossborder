@@ -1,9 +1,8 @@
 'use strict';
 // ─────────────────────────────────────────────────────────────
-//  Buda.com Cross-Border Payments · Server v1.0
+//  Buda.com Cross-Border Payments · Server v2.1
 //  Simulador FX multi-divisa LATAM
 // ─────────────────────────────────────────────────────────────
-if (!process.env.PGPASSWORD) process.env.PGPASSWORD = '';
 
 const express  = require('express');
 const axios    = require('axios');
