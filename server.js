@@ -256,7 +256,12 @@ app.post('/api/tasa-manual', authMw, async (req, res) => {
 app.get('/reset-admin', async (req, res) => {
   try {
     const hash = await bcrypt.hash('buda2025', 10);
-    await pool.query('DELETE FROM usuarios WHERE email=$1', ['alejandro@buda.com']);
+    // Delete simulations first to avoid FK constraint
+    const u = await pool.query('SELECT id FROM usuarios WHERE email=$1', ['alejandro@buda.com']);
+    if (u.rows.length) {
+      await pool.query('DELETE FROM simulaciones WHERE usuario_id=$1', [u.rows[0].id]);
+      await pool.query('DELETE FROM usuarios WHERE id=$1', [u.rows[0].id]);
+    }
     await pool.query('INSERT INTO usuarios (nombre,empresa,email,password_hash) VALUES ($1,$2,$3,$4)',
       ['Alejandro Beltrán', 'Buda.com', 'alejandro@buda.com', hash]);
     res.json({ ok: true, msg: 'Admin creado · alejandro@buda.com / buda2025' });
