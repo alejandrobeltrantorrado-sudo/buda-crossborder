@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Buda.com · Cross-Border Payments</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#F9FAFB;--bg2:#FFFFFF;--bg3:#F3F4F6;
+  --blue:#1A56DB;--blue-d:#1447BB;--blue-l:#EBF5FF;--blue-border:#BFDBFE;
+  --text:#111928;--gray:#6B7280;--border:#E5E7EB;
+  --green:#057A55;--green-l:#F3FAF7;
+  --red:#E02424;
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;min-height:100vh}
+
+.nav{background:#fff;border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.logo{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px;cursor:pointer}
+.logo span{color:var(--blue)}
+.logo-sub{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.1em;margin-left:8px}
+.nav-r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.rates-pill{background:var(--blue-l);border:1px solid var(--blue-border);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px}
+.rdot{width:6px;height:6px;border-radius:50%;background:var(--blue)}
+.user-chip{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray)}
+.av{width:28px;height:28px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.btn-nav{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:#fff;color:var(--gray);cursor:pointer;font-size:11px;font-family:'Inter',sans-serif}
+.btn-nav:hover{border-color:var(--blue);color:var(--blue)}
+.nav-tabs{display:flex;gap:0;margin-left:16px}
+.ntab{padding:0 14px;height:56px;display:flex;align-items:center;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.15s;white-space:nowrap}
+.ntab:hover{color:var(--blue)}
+.ntab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3)}
+.login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:40px;width:360px;box-shadow:0 4px 24px rgba(0,0,0,.06)}
+.login-logo{text-align:center;margin-bottom:28px}
+.llogo{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-1px}
+.llogo span{color:var(--blue)}
+.lsub{font-size:12px;color:var(--gray);margin-top:4px}
+.fg{margin-bottom:12px}
+.fg label{display:block;font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500}
+.fi{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:13px;color:var(--text);font-family:'Inter',sans-serif;transition:.15s;background:#fff}
+.fi:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-l)}
+.btn-p{width:100%;padding:11px;border-radius:9px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+.btn-p:hover{background:var(--blue-d)}
+
+.main{display:flex;height:calc(100vh - 56px)}
+.left{width:340px;flex-shrink:0;background:#fff;border-right:1px solid var(--border);overflow-y:auto}
+.left-inner{padding:20px}
+.info-hero{background:linear-gradient(135deg,#1A56DB,#1447BB);border-radius:14px;padding:22px;color:#fff;margin-bottom:14px}
+.ih-tag{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:8px}
+.ih-title{font-size:20px;font-weight:800;line-height:1.25;margin-bottom:8px}
+.ih-sub{font-size:12px;opacity:.8;line-height:1.6}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.metric{background:var(--bg3);border-radius:10px;padding:10px;text-align:center}
+.mv{font-size:16px;font-weight:800;color:var(--blue);font-family:monospace}
+.ml{font-size:9px;color:var(--gray);margin-top:2px;text-transform:uppercase}
+.stitle{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:8px}
+.corridor{background:var(--bg3);border-radius:8px;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.cname{font-size:12px;font-weight:500}
+.crate{font-size:12px;font-family:monospace;color:var(--blue);font-weight:600}
+.cbadge{font-size:9px;font-weight:600;padding:2px 7px;border-radius:20px;background:var(--green-l);color:var(--green)}
+
+.chat-panel{flex:1;display:flex;flex-direction:column;background:var(--bg)}
+.chat-header{padding:14px 20px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}
+.ch-av{width:36px;height:36px;background:linear-gradient(135deg,#1A56DB,#1447BB);border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;flex-shrink:0}
+.ch-name{font-size:14px;font-weight:600}
+.ch-sub{font-size:11px;color:var(--gray)}
+.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg{display:flex;gap:10px;max-width:78%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.bot{align-self:flex-start}
+.msg-av{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:2px}
+.msg.bot .msg-av{background:linear-gradient(135deg,#1A56DB,#1447BB);color:#fff}
+.msg.user .msg-av{background:var(--bg3);color:var(--gray)}
+.bubble{padding:11px 15px;border-radius:14px;font-size:13px;line-height:1.6}
+.msg.bot .bubble{background:#fff;border:1px solid var(--border);border-top-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.msg.user .bubble{background:var(--blue);color:#fff;border-top-right-radius:4px}
+.bubble p{margin-bottom:6px}
+.bubble p:last-child{margin:0}
+.bubble strong{font-weight:600}
+.bubble li{margin-left:16px;margin-bottom:2px}
+.typing{display:flex;gap:4px;align-items:center;padding:11px 15px;background:#fff;border:1px solid var(--border);border-radius:14px;border-top-left-radius:4px}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--gray);animation:bounce .8s infinite}
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
+.sugs{padding:0 20px 10px;display:flex;gap:8px;flex-wrap:wrap}
+.sug{padding:6px 12px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--gray);cursor:pointer}
+.sug:hover{border-color:var(--blue);color:var(--blue)}
+.input-wrap{padding:12px 16px;background:#fff;border-top:1px solid var(--border)}
+.input-row{display:flex;gap:8px;align-items:flex-end;background:var(--bg3);border:1.5px solid var(--border);border-radius:12px;padding:8px 8px 8px 14px;transition:.15s}
+.input-row:focus-within{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px var(--blue-l)}
+.chat-ta{flex:1;border:none;background:transparent;font-size:13px;font-family:'Inter',sans-serif;color:var(--text);resize:none;outline:none;min-height:20px;max-height:120px;line-height:1.5}
+.chat-ta::placeholder{color:var(--gray)}
+.send{width:34px;height:34px;border-radius:8px;border:none;background:var(--blue);color:#fff;cursor:pointer;flex-shrink:0;font-size:16px}
+.send:hover{background:var(--blue-d)}
+.send:disabled{background:var(--border);cursor:not-allowed}
+.hint{font-size:10px;color:var(--gray);text-align:center;margin-top:5px}
+
+.sim-wrap{flex:1;overflow-y:auto;padding:24px}
+.card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.card-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gray);margin-bottom:14px}
+.curr-btns{display:flex;gap:6px;flex-wrap:wrap}
+.curr-btn{padding:5px 11px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:11px;cursor:pointer;color:var(--gray)}
+.curr-btn.active{border-color:var(--blue);background:var(--blue-l);color:var(--blue);font-weight:600}
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.kpi{background:var(--bg3);border-radius:10px;padding:14px;text-align:center}
+.kpi.blue{background:var(--blue-l);border:1px solid var(--blue-border)}
+.kv{font-size:22px;font-weight:800;font-family:monospace}
+.kpi.blue .kv{color:var(--blue)}
+.kl{font-size:10px;color:var(--gray);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+.annual{background:#111928;border-radius:12px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.btn-save{width:100%;padding:10px;border-radius:9px;border:none;background:var(--blue);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+
+.hist-wrap{flex:1;overflow-y:auto;padding:24px}
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{text-align:left;padding:10px 14px;color:var(--gray);font-size:10px;text-transform:uppercase;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 14px;border-bottom:1px solid var(--border)}
+.tbl tr:hover td{background:var(--bg3)}
+
+.float{position:fixed;top:16px;right:16px;z-index:9999;max-width:300px;border-radius:10px;padding:12px 14px;box-shadow:0 4px 20px rgba(0,0,0,.1);animation:slideIn .25s ease;display:flex;gap:8px;align-items:flex-start}
+@keyframes slideIn{from{transform:translateX(110%)}to{transform:translateX(0)}}
+
+@media(max-width:768px){.left{display:none}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="llogo">buda<span>.</span>com</div>
+        <div class="lsub">Cross-Border Payments</div>
+      </div>
+      <div class="fg"><label>Email</label><input class="fi" type="email" id="lEmail" placeholder="tu@empresa.com" autocomplete="off"></div>
+      <div class="fg"><label>Contrasena</label><input class="fi" type="password" id="lPass" placeholder="&#xB7;&#xB7;&#xB7;&#xB7;&#xB7;&#xB7;&#xB7;&#xB7;" onkeydown="if(event.key==='Enter')login()"></div>
+      <button class="btn-p" onclick="login()">Ingresar</button>
+      <div id="lErr" style="font-size:11px;color:var(--red);text-align:center;margin-top:10px"></div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--gray)">Sin acceso? <a href="mailto:otc@buda.com" style="color:var(--blue)">Contactanos</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appWrap" style="display:none">
+  <nav class="nav">
+    <div class="logo" onclick="switchView('chat')">buda<span>.</span>com <span class="logo-sub">Cross-Border</span></div>
+    <div class="nav-tabs">
+      <div class="ntab active" id="ntab-chat" onclick="switchView('chat')">Asistente</div>
+      <div class="ntab" id="ntab-sim" onclick="switchView('sim')">Simulador</div>
+      <div class="ntab" id="ntab-hist" onclick="switchView('hist');loadHist()">Mis simulaciones</div>
+    </div>
+    <div class="nav-r">
+      <div class="rates-pill"><div class="rdot"></div><span id="rSrc">Cargando...</span></div>
+      <div class="user-chip"><div class="av" id="uAv">B</div><span id="uName"></span></div>
+      <button class="btn-nav" onclick="logout()">Salir</button>
+    </div>
+  </nav>
+
+  <!-- CHAT -->
+  <div class="main" id="vChat">
+    <div class="left">
+      <div class="left-inner">
+        <div class="info-hero">
+          <div class="ih-tag">B2B &middot; API-first &middot; LATAM &amp; Asia</div>
+          <div class="ih-title">Pagos internacionales en minutos</div>
+          <div class="ih-sub">Una sola integracion para operar en 6 paises. Sin bancos corresponsales, sin dias de espera.</div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><div class="mv">&lt;5min</div><div class="ml">Liquidacion</div></div>
+          <div class="metric"><div class="mv">1 API</div><div class="ml">Integracion</div></div>
+          <div class="metric"><div class="mv">6</div><div class="ml">Paises</div></div>
+        </div>
+        <div class="stitle">Tasas en tiempo real</div>
+        <div id="corridorRates"></div>
+        <div style="font-size:10px;color:var(--gray);text-align:center;margin-top:6px" id="rTime"></div>
+      </div>
+    </div>
+    <div class="chat-panel">
+      <div class="chat-header">
+        <div class="ch-av">B</div>
+        <div>
+          <div class="ch-name">Asistente Buda Cross-Border</div>
+          <div class="ch-sub">Tasas en tiempo real &middot; Simulaciones &middot; Consultas sobre el servicio</div>
+        </div>
+        <div style="margin-left:auto"><button class="btn-nav" onclick="clearChat()">Nueva conversacion</button></div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="sugs" id="sugs"></div>
+      <div class="input-wrap">
+        <div class="input-row">
+          <textarea class="chat-ta" id="chatInput" placeholder="Pregunta sobre tasas, simula tu negocio..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+          <button class="send" id="sendBtn" onclick="sendMsg()">&#8593;</button>
+        </div>
+        <div class="hint">Shift+Enter para nueva linea &middot; Enter para enviar</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULATOR -->
+  <div style="display:none" id="vSim">
+    <div class="sim-wrap">
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px">Simulador de negocio</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px">Proyecta tu volumen mensual y anual en cualquier corredor</div>
+      <div class="card">
+        <div class="card-title">Corredor</div>
+        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;margin-bottom:12px">
+          <div>
+            <div style="font-size:11px;color:var(--gray);margin-bottom:6px">Moneda origen</div>
+            <div class="curr-btns" id="origSel"></div>
+          </div>
+          <div style="font-size:20px;color:var(--gray);margin-top:14px">&#8594;</div>
+          <div>
+            <div style="font-size:11px;color:var(--gray);margin-bottom:6px">Moneda destino</div>
+            <div class="curr-btns" id="destSel"></div>
+          </div>
+        </div>
+        <div id="tasaBanner" style="display:none;background:var(--blue-l);border:1px solid var(--blue-border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--blue);font-family:monospace"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Parametros del negocio</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="fg" style="margin:0"><label>Ticket promedio (origen)</label><input class="fi" type="number" id="sTicket" placeholder="5000000" oninput="calcSim()"></div>
+          <div class="fg" style="margin:0"><label>Operaciones por dia</label><input class="fi" type="number" id="sOpsDay" placeholder="10" oninput="calcSim()"></div>
+          <div class="fg" style="margin:0"><label>Dias operativos al mes</label><input class="fi" type="number" id="sDays" placeholder="22" oninput="calcSim()"></div>
+          <div class="fg" style="margin:0"><label>Tu margen (%)</label><input class="fi" type="number" id="sMargen" placeholder="1.5" step="0.1" oninput="calcSim()"></div>
+        </div>
+        <div class="fg" style="margin-top:10px;margin-bottom:0"><label>Notas</label><input class="fi" type="text" id="sNotas" placeholder="Ej: remesas Colombia-Chile"></div>
+      </div>
+      <div id="simResult">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)">
+          <div style="font-size:32px;margin-bottom:8px">&#128202;</div>
+          <div>Completa los parametros para ver la proyeccion</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div style="display:none;padding:24px" id="vHist">
+    <div style="font-size:20px;font-weight:700;margin-bottom:16px">Mis simulaciones</div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <table class="tbl">
+        <thead><tr>
+          <th>Par</th><th>Tasa ref.</th><th>Margen</th><th>Volumen/mes</th><th>Ganancia proy.</th><th>Fecha</th>
+        </tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+var BASE = '';
+var TOKEN = localStorage.getItem('budaToken');
+var USER = JSON.parse(localStorage.getItem('budaUser') || 'null');
+var fx = {};
+var orig = 'COP', dest = 'CLP';
+var history = [];
+var busy = false;
+
+var CURR = {
+  COP: {flag: 'CO', name: 'Peso Colombiano', sym: '$'},
+  CLP: {flag: 'CL', name: 'Peso Chileno', sym: '$'},
+  PEN: {flag: 'PE', name: 'Sol Peruano', sym: 'S/'},
+  BOB: {flag: 'BO', name: 'Boliviano', sym: 'Bs.'},
+  VES: {flag: 'VE', name: 'Bolivar', sym: 'Bs.'},
+  CNY: {flag: 'CN', name: 'Yuan Chino', sym: 'CNY'},
+  USD: {flag: 'US', name: 'Dolar USD', sym: '$'}
+};
+var ACTIVE = ['COP','CLP','PEN','BOB','VES','CNY'];
+
+var SUGS = [
+  'Cuanto es 50 millones de COP en CLP hoy?',
+  'Simula 20 ops/dia de USD 10.000 con margen 1.5%',
+  'Cuales son los corredores activos?',
+  'Como funciona la integracion API?',
+  'Cuanto gano al ano con 100 ops diarias de COP 5M?'
+];
+
+function fmt(n, d) {
+  if (n === null || n === undefined) return '--';
+  d = d !== undefined ? d : 2;
+  return parseFloat(n).toLocaleString('es-CO', {minimumFractionDigits: d, maximumFractionDigits: d});
+}
+
+async function api(m, u, b) {
+  var h = {'Content-Type': 'application/json'};
+  if (TOKEN) h['Authorization'] = 'Bearer ' + TOKEN;
+  var r = await fetch(BASE + u, {method: m, headers: h, body: b ? JSON.stringify(b) : undefined});
+  if (r.status === 401 && u !== '/auth/login') { logout(); return {}; }
+  return r.json();
+}
+
+async function login() {
+  var email = document.getElementById('lEmail').value.trim();
+  var pass = document.getElementById('lPass').value;
+  var d = await api('POST', '/auth/login', {email: email, password: pass});
+  if (d.error) { document.getElementById('lErr').textContent = d.error; return; }
+  TOKEN = d.token; USER = d.user;
+  localStorage.setItem('budaToken', TOKEN);
+  localStorage.setItem('budaUser', JSON.stringify(USER));
+  showApp();
+}
+
+function logout() {
+  TOKEN = null; USER = null;
+  localStorage.removeItem('budaToken'); localStorage.removeItem('budaUser');
+  document.getElementById('appWrap').style.display = 'none';
+  document.getElementById('loginWrap').style.display = 'block';
+}
+
+function showApp() {
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('appWrap').style.display = 'block';
+  if (USER) {
+    document.getElementById('uName').textContent = USER.nombre;
+    var av = USER.nombre.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    document.getElementById('uAv').textContent = av;
+  }
+  buildSelectors();
+  loadRates();
+  setInterval(loadRates, 3600000);
+  welcome();
+  renderSugs();
+}
+
+function switchView(v) {
+  document.getElementById('vChat').style.display = v === 'chat' ? 'flex' : 'none';
+  document.getElementById('vSim').style.display = v === 'sim' ? 'block' : 'none';
+  document.getElementById('vHist').style.display = v === 'hist' ? 'block' : 'none';
+  ['chat','sim','hist'].forEach(function(x) {
+    var t = document.getElementById('ntab-' + x);
+    if (t) t.classList.toggle('active', x === v);
+  });
+  if (v === 'sim') { buildSelectors(); calcSim(); }
+}
+
+async function loadRates() {
+  var d = await api('GET', '/api/rates');
+  if (!d.rates) return;
+  fx = d;
+  document.getElementById('rSrc').textContent = d.source === 'api' ? 'Tiempo real' : 'Tasas ref.';
+  var t = new Date(d.updatedAt);
+  var el = document.getElementById('rTime');
+  if (el) el.textContent = 'Act. ' + t.toLocaleTimeString('es-CO', {hour:'2-digit', minute:'2-digit'});
+  renderCorridors(d.rates);
+  calcSim();
+}
+
+function renderCorridors(rates) {
+  var pairs = [['COP','CLP'],['COP','PEN'],['COP','BOB'],['COP','VES'],['COP','CNY'],['USD','COP']];
+  var el = document.getElementById('corridorRates');
+  if (!el) return;
+  var html = '';
+  pairs.forEach(function(p) {
+    var r = (rates[p[1]] || 1) / (rates[p[0]] || 1);
+    var dec = r < 10 ? 4 : 2;
+    html += '<div class="corridor">' +
+      '<span class="cname">' + p[0] + ' &#8594; ' + p[1] + '</span>' +
+      '<div style="display:flex;align-items:center;gap:8px">' +
+        '<span class="crate">' + fmt(r, dec) + '</span>' +
+        '<span class="cbadge">Activo</span>' +
+      '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function buildSelectors() {
+  var keys = ACTIVE.concat(['USD']);
+  var o = document.getElementById('origSel');
+  var d = document.getElementById('destSel');
+  if (!o || !d) return;
+  var ho = '', hd = '';
+  keys.forEach(function(c) {
+    ho += '<button class="curr-btn' + (c === orig ? ' active' : '') + '" onclick="setOrig(\'' + c + '\')">' + c + '</button>';
+    hd += '<button class="curr-btn' + (c === dest ? ' active' : '') + '" onclick="setDest(\'' + c + '\')">' + c + '</button>';
+  });
+  o.innerHTML = ho;
+  d.innerHTML = hd;
+}
+
+function setOrig(c) { orig = c; buildSelectors(); calcSim(); }
+function setDest(c) { dest = c; buildSelectors(); calcSim(); }
+
+function welcome() {
+  var name = USER ? USER.nombre.split(' ')[0] : 'bienvenido';
+  var txt = 'Hola, ' + name + '! Soy el asistente de Buda Cross-Border Payments. Puedo ayudarte con:\n\n' +
+    '- Consultar tasas de cambio en tiempo real\n' +
+    '- Simular tu modelo de negocio y proyectar ingresos\n' +
+    '- Responder preguntas sobre el servicio y la API\n\n' +
+    'En que puedo ayudarte hoy?';
+  addBot(txt);
+}
+
+function renderSugs() {
+  var el = document.getElementById('sugs');
+  if (!el) return;
+  var html = '';
+  SUGS.forEach(function(s) {
+    html += '<button class="sug" onclick="useSug(this.textContent)">' + s + '</button>';
+  });
+  el.innerHTML = html;
+}
+
+function useSug(s) {
+  document.getElementById('chatInput').value = s;
+  sendMsg();
+}
+
+function clearChat() {
+  history = [];
+  document.getElementById('msgs').innerHTML = '';
+  welcome();
+  renderSugs();
+}
+
+function addBot(text) {
+  var el = document.getElementById('msgs');
+  var div = document.createElement('div');
+  div.className = 'msg bot';
+  var av = document.createElement('div');
+  av.className = 'msg-av';
+  av.textContent = 'B';
+  var bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.innerHTML = md(text);
+  div.appendChild(av);
+  div.appendChild(bub);
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+  var sugs = document.getElementById('sugs');
+  if (history.length > 0 && sugs) sugs.style.display = 'none';
+}
+
+function addUser(text) {
+  var el = document.getElementById('msgs');
+  var div = document.createElement('div');
+  div.className = 'msg user';
+  var av = document.createElement('div');
+  av.className = 'msg-av';
+  av.textContent = USER && USER.nombre ? USER.nombre[0].toUpperCase() : 'U';
+  var bub = document.createElement('div');
+  bub.className = 'bubble';
+  bub.textContent = text;
+  div.appendChild(av);
+  div.appendChild(bub);
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function showTyping() {
+  var el = document.getElementById('msgs');
+  var div = document.createElement('div');
+  div.className = 'msg bot'; div.id = 'typing';
+  var av = document.createElement('div');
+  av.className = 'msg-av'; av.textContent = 'B';
+  var t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  div.appendChild(av); div.appendChild(t);
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function hideTyping() {
+  var el = document.getElementById('typing');
+  if (el) el.remove();
+}
+
+async function sendMsg() {
+  if (busy) return;
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  input.style.height = 'auto';
+  addUser(text);
+  history.push({role:'user', content: text});
+  busy = true;
+  document.getElementById('sendBtn').disabled = true;
+  var sugs = document.getElementById('sugs');
+  if (sugs) sugs.style.display = 'none';
+  showTyping();
+  try {
+    var d = await api('POST', '/api/chat', {messages: history});
+    hideTyping();
+    if (d.error) { addBot('Error: ' + d.error); }
+    else { history.push({role:'assistant', content: d.response}); addBot(d.response); }
+  } catch(e) {
+    hideTyping();
+    addBot('Error de conexion. Intenta de nuevo.');
+  }
+  busy = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function md(text) {
+  var t = text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  var parts = t.split('\n\n');
+  var out = parts.map(function(p) {
+    var lines = p.split('\n');
+    var hasListItem = lines.some(function(l){ return /^[-*]/.test(l.trim()); });
+    if (hasListItem) {
+      var items = lines.map(function(l){
+        if (/^[-*]/.test(l.trim())) return '<li>' + l.trim().replace(/^[-*]\s*/,'') + '</li>';
+        return l;
+      });
+      return '<ul>' + items.join('') + '</ul>';
+    }
+    return '<p>' + lines.join('<br>') + '</p>';
+  });
+  return out.join('');
+}
+
+function calcSim() {
+  if (!fx.rates) return;
+  var ticket = parseFloat(document.getElementById('sTicket') && document.getElementById('sTicket').value) || 0;
+  var opsDay = parseFloat(document.getElementById('sOpsDay') && document.getElementById('sOpsDay').value) || 0;
+  var days = parseFloat(document.getElementById('sDays') && document.getElementById('sDays').value) || 22;
+  var margen = parseFloat(document.getElementById('sMargen') && document.getElementById('sMargen').value) || 0;
+  var rO = fx.rates[orig] || 1;
+  var rD = fx.rates[dest] || 1;
+  var tasaRef = rD / rO;
+  var tasaCli = tasaRef * (1 + margen / 100);
+  var dec = tasaRef < 10 ? 4 : 2;
+  var cO = CURR[orig] ? CURR[orig].sym : '$';
+  var cD = CURR[dest] ? CURR[dest].sym : '$';
+  var banner = document.getElementById('tasaBanner');
+  if (banner && tasaRef > 0) {
+    banner.style.display = 'block';
+    banner.textContent = '1 ' + orig + ' = ' + cD + ' ' + fmt(tasaRef, dec) + ' (ref.) | Tu tasa: ' + cD + ' ' + fmt(tasaCli, dec) + ' (+' + margen + '%)';
+  }
+  if (!ticket || !opsDay || !margen) {
+    document.getElementById('simResult').innerHTML = '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:40px;text-align:center;color:var(--gray)"><div style="font-size:32px;margin-bottom:8px">&#128202;</div><div>Completa los parametros para ver la proyeccion</div></div>';
+    return;
+  }
+  var ops = Math.round(opsDay * days);
+  var vol = ticket * ops;
+  var volD = vol * tasaCli;
+  var marg = vol * (margen / 100);
+  var margD = marg * tasaCli;
+  var year = marg * 12;
+  var yearD = margD * 12;
+  document.getElementById('simResult').innerHTML =
+    '<div class="kpi-grid">' +
+      '<div class="kpi"><div class="kv">' + ops.toLocaleString('es-CO') + '</div><div class="kl">Ops / mes</div></div>' +
+      '<div class="kpi"><div class="kv">' + cO + ' ' + fmt(vol) + '</div><div class="kl">Volumen / mes</div></div>' +
+      '<div class="kpi blue"><div class="kv">' + cO + ' ' + fmt(marg) + '</div><div class="kl">Tu margen / mes</div></div>' +
+    '</div>' +
+    '<div class="annual">' +
+      '<div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px">Proyeccion anual</div>' +
+        '<div style="font-size:26px;font-weight:800;color:#fff;font-family:monospace">' + cO + ' ' + fmt(year) + '</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,.4)">' + cD + ' ' + fmt(yearD) + ' a ' + margen + '% margen</div>' +
+      '</div>' +
+      '<div style="text-align:right"><div style="font-size:11px;color:rgba(255,255,255,.4);margin-bottom:4px">Corredor</div>' +
+        '<div style="font-size:16px;font-weight:700;color:#fff;font-family:monospace">' + orig + ' &#8594; ' + dest + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:11px;color:var(--gray);font-family:monospace;line-height:2;margin-bottom:12px">' +
+      'Tasa ref: ' + fmt(tasaRef, dec) + ' | Tu tasa: ' + fmt(tasaCli, dec) + ' | Ticket: ' + cO + ' ' + fmt(ticket) + ' | ' + opsDay + ' ops/dia x ' + days + ' dias = ' + ops + ' ops/mes' +
+    '</div>' +
+    '<button class="btn-save" onclick="guardar()">Guardar simulacion</button>';
+}
+
+async function guardar() {
+  var ticket = parseFloat(document.getElementById('sTicket').value) || 0;
+  var opsDay = parseFloat(document.getElementById('sOpsDay').value) || 0;
+  var days = parseFloat(document.getElementById('sDays').value) || 22;
+  var margen = parseFloat(document.getElementById('sMargen').value) || 0;
+  var notas = document.getElementById('sNotas').value;
+  if (!ticket || !opsDay || !margen) { alert('Completa todos los campos'); return; }
+  var ops = Math.round(opsDay * days);
+  var d = await api('POST', '/api/simular', {moneda_origen: orig, moneda_destino: dest, margen_pct: margen, ticket_promedio: ticket, num_operaciones: ops, notas: notas});
+  if (d.error) { alert('Error: ' + d.error); return; }
+  var cO = CURR[orig] ? CURR[orig].sym : '$';
+  floatMsg('Simulacion guardada', 'Margen mensual: ' + cO + ' ' + fmt(d.ganancia_proyectada));
+}
+
+async function loadHist() {
+  var d = await api('GET', '/api/mis-simulaciones');
+  var rows = d.simulaciones || [];
+  document.getElementById('histBody').innerHTML = rows.length ? rows.map(function(r) {
+    return '<tr>' +
+      '<td><span style="background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:20px;font-size:11px;font-family:monospace">' + r.par + '</span></td>' +
+      '<td style="font-family:monospace">' + fmt(r.tasa_referencia, 4) + '</td>' +
+      '<td>' + fmt(r.margen_pct, 2) + '%</td>' +
+      '<td style="font-family:monospace">' + fmt(r.volumen_total) + '</td>' +
+      '<td style="font-family:monospace;color:var(--green);font-weight:600">' + fmt(r.ganancia_proyectada) + '</td>' +
+      '<td style="color:var(--gray);font-size:11px">' + new Date(r.created_at).toLocaleString('es-CO', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'}) + '</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray)">Sin simulaciones guardadas</td></tr>';
+}
+
+function floatMsg(title, body) {
+  var el = document.createElement('div');
+  el.className = 'float';
+  el.style.background = 'var(--blue-l)';
+  el.style.border = '1px solid var(--blue-border)';
+  el.innerHTML = '<span style="font-size:18px">&#9989;</span><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--blue)">' + title + '</div><div style="font-size:10px;color:#888;margin-top:2px">' + body + '</div></div><button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:16px">x</button>';
+  document.body.appendChild(el);
+  setTimeout(function() { if (el.parentNode) { el.style.opacity = '0'; el.style.transition = '.3s'; setTimeout(function(){ el.remove(); }, 300); } }, 5000);
+}
+
+if (TOKEN) {
+  USER = JSON.parse(localStorage.getItem('budaUser') || 'null');
+  showApp();
+} else {
+  document.getElementById('loginWrap').style.display = 'block';
+}
+</script>
+</body>
+</html>
