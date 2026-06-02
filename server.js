@@ -171,7 +171,7 @@ Corredores activos: Colombia-Chile, Colombia-Peru, Colombia-Bolivia, Colombia-Ve
   }
 });
 
-app.get('/health', (req, res) => res.json({ status: 'ok', fx: fxState.source }));
+app.get('/health', (req, res) => res.json({ status: 'ok', fx: fxState.source, chat: !!ANTHROPIC_API_KEY, keyLen: ANTHROPIC_API_KEY.length }));
 
 app.get('/reset-admin', async (req, res) => {
   try {
@@ -192,6 +192,7 @@ app.get('/', (req, res) => {
 });
 
 async function start() {
+  console.log('[config] ANTHROPIC_API_KEY:', ANTHROPIC_API_KEY ? 'SET (len=' + ANTHROPIC_API_KEY.length + ')' : 'NOT SET');
   try { await initDB(); } catch(e) { console.error('[db]', e.message); }
   await refreshFX();
   setInterval(refreshFX, 3600000);
