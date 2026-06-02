@@ -262,7 +262,7 @@ var TOKEN = localStorage.getItem('budaToken');
 var USER = JSON.parse(localStorage.getItem('budaUser') || 'null');
 var fx = {};
 var orig = 'COP', dest = 'CLP';
-var history = [];
+var chatLog = [];
 var busy = false;
 
 var CURR = {
@@ -415,7 +415,7 @@ function useSug(s) {
 }
 
 function clearChat() {
-  history = [];
+  chatLog = [];
   document.getElementById('msgs').innerHTML = '';
   welcome();
   renderSugs();
@@ -436,7 +436,7 @@ function addBot(text) {
   el.appendChild(div);
   el.scrollTop = el.scrollHeight;
   var sugs = document.getElementById('sugs');
-  if (history.length > 0 && sugs) sugs.style.display = 'none';
+  if (chatLog.length > 0 && sugs) sugs.style.display = 'none';
 }
 
 function addUser(text) {
@@ -482,17 +482,17 @@ async function sendMsg() {
   input.value = '';
   input.style.height = 'auto';
   addUser(text);
-  history.push({role:'user', content: text});
+  chatLog.push({role:'user', content: text});
   busy = true;
   document.getElementById('sendBtn').disabled = true;
   var sugs = document.getElementById('sugs');
   if (sugs) sugs.style.display = 'none';
   showTyping();
   try {
-    var d = await api('POST', '/api/chat', {messages: history});
+    var d = await api('POST', '/api/chat', {messages: chatLog});
     hideTyping();
     if (d.error) { addBot('Error: ' + d.error); }
-    else { history.push({role:'assistant', content: d.response}); addBot(d.response); }
+    else { chatLog.push({role:'assistant', content: d.response}); addBot(d.response); }
   } catch(e) {
     hideTyping();
     addBot('Error de conexion. Intenta de nuevo.');
